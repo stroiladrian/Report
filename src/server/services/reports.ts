@@ -602,6 +602,15 @@ export async function changeStatus(
     const event = to.key === "redirected" ? "report_redirected" : to.isResolved ? "report_resolved" : "status_changed";
     await notifyUser(r.reporterId, event, vars, { reportId: r.id, link });
   }
+  // Tell the assigned staff member when someone else moves their report along.
+  if (r.assignee && r.assignee.userId !== actor.id) {
+    await notifyUser(
+      r.assignee.userId,
+      "staff_status",
+      { number: r.number, title: r.title, status: toRow.label as Record<string, string> },
+      { reportId: r.id, link: `/admin/reports/${r.number}`, channels: { email: false, sms: false, inApp: true } },
+    );
+  }
   return updated;
 }
 
@@ -762,6 +771,14 @@ export async function addComment(
   });
   if ((input.kind === "UPDATE" || input.kind === "RESPONSE") && r.reporterId) {
     await notifyUser(r.reporterId, "admin_response", { number: r.number, title: r.title }, { reportId: r.id, link: `/reports/${r.number}` });
+  }
+  if (input.kind !== "CITIZEN" && r.assignee && r.assignee.userId !== actor.id) {
+    await notifyUser(
+      r.assignee.userId,
+      "staff_comment",
+      { number: r.number, title: r.title },
+      { reportId: r.id, link: `/admin/reports/${r.number}`, channels: { email: false, sms: false, inApp: true } },
+    );
   }
   if (input.kind === "CITIZEN" && r.assignee) {
     await notifyUser(

@@ -16,7 +16,9 @@ export type NotificationEvent =
   | "report_resolved"
   | "admin_response"
   | "new_report_staff"
-  | "report_assigned";
+  | "report_assigned"
+  | "staff_comment"
+  | "staff_status";
 
 export function appUrl(path = "") {
   const base = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");

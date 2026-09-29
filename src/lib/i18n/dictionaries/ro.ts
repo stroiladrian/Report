@@ -450,6 +450,8 @@ const ro: Dictionary = {
     admin_response: { title: "Răspuns nou la sesizarea {number}", body: "Primăria a răspuns la sesizarea „{title}”." },
     new_report_staff: { title: "Sesizare nouă {number}", body: "A fost depusă o sesizare nouă în „{category}”." },
     report_assigned: { title: "Sesizarea {number} v-a fost alocată", body: "V-a fost alocată sesizarea „{title}”." },
+    staff_comment: { title: "Activitate nouă la sesizarea {number}", body: "Un coleg a adăugat un comentariu sau o notă la „{title}”." },
+    staff_status: { title: "Sesizarea {number}: {status}", body: "Un coleg a schimbat statusul sesizării „{title}” în „{status}”." },
     email_verify: { subject: "Confirmați adresa de e-mail", body: "Bună ziua, {name},\n\nConfirmați adresa de e-mail deschizând acest link:\n{link}\n\nLink-ul este valabil {hours} ore." },
     password_reset: { subject: "Resetarea parolei", body: "Bună ziua, {name},\n\nPentru a alege o parolă nouă deschideți acest link:\n{link}\n\nDacă nu ați cerut acest lucru, ignorați mesajul." },
     otp: { body: "{brand}: codul de autentificare este {code}. Expiră în {minutes} minute." },

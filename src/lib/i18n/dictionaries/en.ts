@@ -448,6 +448,8 @@ const en = {
     admin_response: { title: "New response for report {number}", body: "The city replied to your report “{title}”." },
     new_report_staff: { title: "New report {number}", body: "A new report was submitted in “{category}”." },
     report_assigned: { title: "Report {number} assigned to you", body: "You were assigned the report “{title}”." },
+    staff_comment: { title: "New activity on report {number}", body: "A colleague added a comment or note on “{title}”." },
+    staff_status: { title: "Report {number}: {status}", body: "A colleague changed the status of “{title}” to “{status}”." },
     email_verify: { subject: "Verify your e-mail address", body: "Hello {name},\n\nConfirm your e-mail address by opening this link:\n{link}\n\nThe link is valid for {hours} hours." },
     password_reset: { subject: "Reset your password", body: "Hello {name},\n\nTo choose a new password open this link:\n{link}\n\nIf you did not ask for this, ignore this message." },
     otp: { body: "{brand}: your login code is {code}. It expires in {minutes} minutes." },
