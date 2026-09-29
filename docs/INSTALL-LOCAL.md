@@ -47,8 +47,8 @@ cd ~/Documents/CivicReport
 From GitHub instead:
 
 ```bash
-git clone https://github.com/<your-account>/civicreport.git
-cd civicreport
+git clone https://github.com/stroiladrian/Report.git
+cd Report
 ```
 
 Then install the app's libraries:

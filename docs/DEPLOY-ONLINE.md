@@ -35,7 +35,7 @@ The plan:
    git add .
    git commit -m "CivicReport"
    git branch -M main
-   git remote add origin https://github.com/<your-account>/civicreport.git
+   git remote add origin https://github.com/stroiladrian/Report.git
    git push -u origin main
    ```
 
@@ -84,8 +84,8 @@ ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw --force enable
 **2. Download the code from GitHub:**
 
 ```bash
-git clone https://github.com/<your-account>/civicreport.git
-cd civicreport
+git clone https://github.com/stroiladrian/Report.git
+cd Report
 ```
 
 The repository is private, so Git asks for your GitHub username and the access token from step 1.

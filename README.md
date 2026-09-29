@@ -6,6 +6,102 @@ It reproduces the functionality and UX of a municipal reporting platform. The re
 
 ---
 
+**Repository:** <https://github.com/stroiladrian/Report>
+
+**Contents:** [Demo accounts](#demo-accounts) · [How to install](#how-to-install) · [Features](#features) · [Tech stack](#tech-stack) · [Scripts](#useful-scripts) · [Environment variables](#environment-variables) · [Re-branding](#re-branding) · [Architecture](#architecture) · [REST API](#rest-api) · [Testing](#testing) · [Production deployment](#production-deployment)
+
+---
+
+## Demo accounts
+
+After installing (below), the demo data creates these accounts. **All of them use the password `CivicDemo2026!`** (you can change it with `SEED_PASSWORD` in `.env` before seeding).
+
+| Role | E-mail | Password | What you can do |
+|---|---|---|---|
+| Super admin | `superadmin@civicreport.test` | `CivicDemo2026!` | everything, including the workflow editor, roles and admin accounts |
+| Admin | `admin@civicreport.test` | `CivicDemo2026!` | back-office: all reports, users, categories, departments, audit log |
+| Operator – roads | `operator.drumuri@civicreport.test` | `CivicDemo2026!` | processes reports of the Roads department |
+| Operator – street lighting | `operator.iluminat@civicreport.test` | `CivicDemo2026!` | Street-lighting department |
+| Operator – sanitation | `operator.salubrizare@civicreport.test` | `CivicDemo2026!` | Sanitation department |
+| Operator – green spaces | `operator.verde@civicreport.test` | `CivicDemo2026!` | Green-spaces department |
+| Operator – traffic | `operator.trafic@civicreport.test` | `CivicDemo2026!` | Traffic department |
+| Operator – utilities | `operator.utilitati@civicreport.test` | `CivicDemo2026!` | Utilities department |
+| Operator – buildings/heritage | `operator.patrimoniu@civicreport.test` | `CivicDemo2026!` | Buildings department |
+| Operator – local police | `operator.politie@civicreport.test` | `CivicDemo2026!` | Local-police department |
+| Citizen | `citizen@civicreport.test` | `CivicDemo2026!` | reports problems, follows "My reports"; phone `+40700000001` for SMS-code login |
+
+- **Log in** at `/login`. Staff accounts get a **Back-office** link in the header (or go to `/admin`).
+- **SMS codes, verification and reset e-mails** are not really sent in development. They appear in the **dev mailbox** at <http://localhost:3000/dev/mailbox>.
+- These accounts are for local testing and demos only. For a real launch, seed with `SEED_PRODUCTION=1` (see [Useful scripts](#useful-scripts)), which creates no demo accounts.
+
+---
+
+## How to install
+
+You need about 15 minutes the first time. A more detailed, beginner-friendly guide is in [docs/INSTALL-LOCAL.md](docs/INSTALL-LOCAL.md); putting it online with HTTPS is covered in [docs/DEPLOY-ONLINE.md](docs/DEPLOY-ONLINE.md).
+
+### 1. Install the tools (once)
+
+- **Node.js 22** (20.9+ works) – <https://nodejs.org> (LTS)
+- **Docker Desktop** – <https://www.docker.com/products/docker-desktop/> (runs the PostgreSQL database for you). *Or* install PostgreSQL 14+ yourself (Mac: `brew install postgresql@16 && brew services start postgresql@16`, or <https://postgresapp.com>).
+- **Git** – <https://git-scm.com> (already on most Macs)
+
+### 2. Download the code
+
+```bash
+git clone https://github.com/stroiladrian/Report.git
+cd Report
+npm install
+```
+
+(Or use GitHub's green **Code → Download ZIP** button, unzip, open a Terminal in the folder and run `npm install`.)
+
+### 3. Start the database
+
+With Docker Desktop running:
+
+```bash
+docker compose up -d db
+```
+
+(If you installed PostgreSQL yourself, create the user and database once: `createuser -s civic && psql -c "ALTER USER civic PASSWORD 'civic';" postgres && createdb -O civic civicreport`.)
+
+### 4. Configure
+
+```bash
+cp .env.example .env
+```
+
+The defaults work with the Docker database. Open `.env` only if your database address is different (`DATABASE_URL`) or you want Google login (`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`).
+
+### 5. Create the tables and the demo data
+
+```bash
+npx prisma migrate deploy
+npm run db:seed
+```
+
+This creates the demo accounts above and about 90 fictional reports with photos around Deta (Timiș).
+
+### 6. Run
+
+```bash
+npm run dev
+```
+
+Open <http://localhost:3000> and log in with one of the [demo accounts](#demo-accounts). Next time, you only need step 3 (if Docker isn't already running the database) and step 6.
+
+**Troubleshooting**
+
+| Problem | Fix |
+|---|---|
+| `Can't reach database server` | the database isn't running: start Docker Desktop and run `docker compose up -d db` |
+| `port 3000 is already in use` | another app uses it: `npm run dev -- -p 3001` and open <http://localhost:3001> |
+| Login says the account doesn't exist | you skipped `npm run db:seed` |
+| Want to start over with fresh demo data | `npm run db:reset` (⚠️ deletes everything in the local database) |
+
+---
+
 ## Features
 
 **Public site (RO / EN)**
@@ -51,7 +147,7 @@ Runtime dependencies are kept to a minimum: `next`, `react`, `@prisma/client`, `
 
 ---
 
-## Quick start (local development)
+## Quick start (for developers)
 
 > **Step-by-step guides:** [docs/INSTALL-LOCAL.md](docs/INSTALL-LOCAL.md) (your own computer, localhost) · [docs/DEPLOY-ONLINE.md](docs/DEPLOY-ONLINE.md) (GitHub + a real server with HTTPS)
 
@@ -75,18 +171,7 @@ npm run db:seed
 npm run dev                     # http://localhost:3000
 ```
 
-### Demo accounts
-
-All demo accounts use the password **`CivicDemo2026!`** (configurable with `SEED_PASSWORD`).
-
-| Role | E-mail | Notes |
-|---|---|---|
-| Super admin | `superadmin@civicreport.test` | everything, incl. workflow editor |
-| Admin | `admin@civicreport.test` | reports, users, categories, departments, audit |
-| Operator | `operator.iluminat@civicreport.test` | Street-lighting department (also `operator.drumuri`, `.salubrizare`, `.verde`, `.trafic`, `.utilitati`, `.patrimoniu`, `.politie`) |
-| Citizen | `citizen@civicreport.test` | verified e-mail and phone `+40700000001` (SMS login) |
-
-**Development mailbox:** every e-mail and SMS "sent" by the mock providers appears at **<http://localhost:3000/dev/mailbox>**. This is where you find verification links, reset links and SMS codes. It is disabled in production unless `DEV_MAILBOX=1`.
+Log in with the [demo accounts](#demo-accounts). **Development mailbox:** every e-mail and SMS "sent" by the mock providers appears at **<http://localhost:3000/dev/mailbox>** (verification links, reset links, SMS codes). It is disabled in production unless `DEV_MAILBOX=1`.
 
 ### Useful scripts
 
