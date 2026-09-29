@@ -1,0 +1,31 @@
+# Local production-like stack: `docker compose up --build`
+# then seed once from your machine: DATABASE_URL=postgresql://civic:civic@localhost:5432/civicreport npm run db:seed
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: civic
+      POSTGRES_PASSWORD: civic
+      POSTGRES_DB: civicreport
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U civic -d civicreport"]
+      interval: 5s
+      retries: 10
+  app:
+    build: .
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgresql://civic:civic@db:5432/civicreport?schema=public
+      APP_URL: http://localhost:3000
+      UPLOAD_DIR: /app/storage/uploads
+      EMAIL_PROVIDER: mock
+      SMS_PROVIDER: mock
+      GEOCODER: nominatim
+    ports: ["3000:3000"]
+    volumes: [uploads:/app/storage/uploads]
+volumes:
+  pgdata:
+  uploads:

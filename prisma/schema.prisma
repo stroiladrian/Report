@@ -1,0 +1,403 @@
+// CivicReport database schema (PostgreSQL)
+// Run `npm run db:migrate` after editing to create a new migration.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Access control ────────────────────────────────────────────────
+
+model Role {
+  id          String           @id @default(cuid())
+  key         String           @unique // CITIZEN | OPERATOR | ADMIN | SUPER_ADMIN | custom
+  name        String
+  description String?
+  isSystem    Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  permissions RolePermission[]
+  users       User[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  key         String           @unique
+  description String?
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String?   @unique
+  phone           String?   @unique
+  passwordHash    String?
+  /// Google account id ("sub" claim) when the user signed in with Google.
+  googleSub       String?   @unique
+  firstName       String
+  lastName        String
+  address         String?
+  roleId          String
+  role            Role      @relation(fields: [roleId], references: [id])
+  locale          String    @default("ro")
+  isActive        Boolean   @default(true)
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  notifyEmail     Boolean   @default(true)
+  notifySms       Boolean   @default(false)
+  notifyInApp     Boolean   @default(true)
+  consentAt       DateTime?
+  lastLoginAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  sessions       Session[]
+  tokens         VerificationToken[]
+  reports        Report[]              @relation("reporter")
+  employee       Employee?
+  notifications  Notification[]
+  comments       ReportComment[]
+  attachments    ReportAttachment[]
+  statusChanges  ReportStatusHistory[]
+  auditLogs      AuditLog[]
+
+  @@index([roleId])
+  @@map("users")
+}
+
+model Session {
+  id         String   @id // sha256(token) – the raw token only lives in the cookie
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  userAgent  String?
+  ip         String?
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+enum TokenType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+  PHONE_OTP
+}
+
+model VerificationToken {
+  id         String    @id @default(cuid())
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       TokenType
+  tokenHash  String    @unique
+  target     String // e-mail address or phone number the token was sent to
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([type, target])
+  @@map("verification_tokens")
+}
+
+// ─── Organisation ──────────────────────────────────────────────────
+
+model Department {
+  id         String     @id @default(cuid())
+  code       String     @unique
+  name       String
+  email      String?
+  phone      String?
+  isActive   Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  categories Category[]
+  employees  Employee[]
+  reports    Report[]
+
+  @@map("departments")
+}
+
+model Employee {
+  id           String     @id @default(cuid())
+  userId       String     @unique
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+  jobTitle     String?
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  reports      Report[]   @relation("assignee")
+
+  @@index([departmentId])
+  @@map("employees")
+}
+
+// ─── Reports ───────────────────────────────────────────────────────
+
+model Category {
+  id           String      @id @default(cuid())
+  slug         String      @unique
+  name         Json // { ro, en }
+  description  Json?
+  notice       Json? // optional notice shown in the create flow (e.g. "handled by local police")
+  icon         String?
+  color        String      @default("#64748b")
+  parentId     String?
+  parent       Category?   @relation("CategoryTree", fields: [parentId], references: [id])
+  children     Category[]  @relation("CategoryTree")
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  slaDays      Int?
+  isSensitive  Boolean     @default(false) // reports never shown on the public map
+  isActive     Boolean     @default(true)
+  sortOrder    Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  reports      Report[]    @relation("category")
+  subReports   Report[]    @relation("subcategory")
+
+  @@index([parentId])
+  @@map("report_categories")
+}
+
+model ReportStatus {
+  id          String             @id @default(cuid())
+  key         String             @unique
+  label       Json // { ro, en } – singular ("In progress")
+  pluralLabel Json? // { ro, en } – used by filter groups ("In progress" / "În lucru")
+  /// Key of the public filter group this status belongs to. The group's label/colour
+  /// are taken from the status whose key equals the group key.
+  publicGroup String
+  color       String
+  sortOrder   Int                @default(0)
+  isInitial   Boolean            @default(false)
+  isTerminal  Boolean            @default(false)
+  isResolved  Boolean            @default(false) // counts as "resolved" in statistics
+  isActive    Boolean            @default(true)
+  transitionsFrom StatusTransition[] @relation("from")
+  transitionsTo   StatusTransition[] @relation("to")
+  reports     Report[]
+
+  @@map("report_statuses")
+}
+
+model StatusTransition {
+  id              String       @id @default(cuid())
+  fromStatusId    String
+  toStatusId      String
+  fromStatus      ReportStatus @relation("from", fields: [fromStatusId], references: [id], onDelete: Cascade)
+  toStatus        ReportStatus @relation("to", fields: [toStatusId], references: [id], onDelete: Cascade)
+  requiresComment Boolean      @default(false)
+  /// Permission required in addition to being allowed to process the report (optional).
+  permission      String?
+  createdAt       DateTime     @default(now())
+
+  @@unique([fromStatusId, toStatusId])
+  @@map("status_transitions")
+}
+
+model Report {
+  id            String      @id @default(cuid())
+  number        String      @unique
+  title         String
+  description   String
+  categoryId    String
+  category      Category    @relation("category", fields: [categoryId], references: [id])
+  subcategoryId String?
+  subcategory   Category?   @relation("subcategory", fields: [subcategoryId], references: [id])
+  statusId      String
+  status        ReportStatus @relation(fields: [statusId], references: [id])
+  reporterId    String?
+  reporter      User?       @relation("reporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id])
+  assigneeId    String?
+  assignee      Employee?   @relation("assignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  isPublic      Boolean     @default(true)
+  redirectedTo  String?
+  resolution    String?
+  dueAt         DateTime?
+  resolvedAt    DateTime?
+  closedAt      DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  location    ReportLocation?
+  history     ReportStatusHistory[]
+  comments    ReportComment[]
+  attachments ReportAttachment[]
+
+  @@index([statusId])
+  @@index([categoryId])
+  @@index([createdAt])
+  @@index([reporterId])
+  @@index([departmentId])
+  @@index([assigneeId])
+  @@map("reports")
+}
+
+model ReportLocation {
+  reportId         String   @id
+  report           Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  lat              Float
+  lng              Float
+  street           String?
+  streetNumber     String?
+  district         String?
+  formattedAddress String?
+  source           String   @default("map") // map | gps | search | admin
+  updatedAt        DateTime @updatedAt
+
+  @@index([lat, lng])
+  @@map("report_locations")
+}
+
+model ReportStatusHistory {
+  id           String        @id @default(cuid())
+  reportId     String
+  report       Report        @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  fromStatusId String?
+  toStatusId   String
+  actorId      String?
+  actor        User?         @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  note         String?
+  isPublic     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+
+  @@index([reportId, createdAt])
+  @@map("report_status_history")
+}
+
+enum CommentVisibility {
+  PUBLIC
+  INTERNAL
+}
+
+enum CommentKind {
+  UPDATE // public progress update from staff
+  RESPONSE // official answer to the citizen
+  NOTE // internal note
+  CITIZEN // message from the reporter
+}
+
+model ReportComment {
+  id         String            @id @default(cuid())
+  reportId   String
+  report     Report            @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  authorId   String?
+  author     User?             @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body       String
+  visibility CommentVisibility @default(PUBLIC)
+  kind       CommentKind       @default(UPDATE)
+  createdAt  DateTime          @default(now())
+
+  @@index([reportId, createdAt])
+  @@map("report_comments")
+}
+
+enum AttachmentKind {
+  CITIZEN
+  ADMIN
+}
+
+model ReportAttachment {
+  id           String         @id @default(cuid())
+  reportId     String
+  report       Report         @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  uploaderId   String?
+  uploader     User?          @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
+  storageKey   String         @unique
+  originalName String
+  mimeType     String
+  size         Int
+  kind         AttachmentKind @default(CITIZEN)
+  isPublic     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+
+  @@index([reportId])
+  @@map("report_attachments")
+}
+
+// ─── Notifications & audit ─────────────────────────────────────────
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String
+  link      String?
+  reportId  String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  deliveries NotificationDelivery[]
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+enum DeliveryChannel {
+  EMAIL
+  SMS
+}
+
+model NotificationDelivery {
+  id             String          @id @default(cuid())
+  notificationId String?
+  notification   Notification?   @relation(fields: [notificationId], references: [id], onDelete: SetNull)
+  channel        DeliveryChannel
+  provider       String
+  recipient      String
+  subject        String?
+  body           String
+  status         String // SENT | FAILED | MOCKED
+  error          String?
+  createdAt      DateTime        @default(now())
+
+  @@index([createdAt])
+  @@map("notification_deliveries")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String?
+  data       Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([actorId])
+  @@map("audit_logs")
+}
+
+model Counter {
+  key   String @id
+  value Int    @default(0)
+
+  @@map("counters")
+}

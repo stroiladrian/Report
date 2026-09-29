@@ -1,0 +1,6 @@
+# Caddy gets and renews the HTTPS certificate (Let's Encrypt) automatically.
+# DOMAIN comes from .env, e.g. sesizari.primaria-exemplu.ro
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:3000
+}

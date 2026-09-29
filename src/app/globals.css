@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    font-family: var(--font-sans);
+  }
+  body {
+    @apply bg-white text-slate-900 antialiased;
+  }
+  :focus-visible {
+    outline: 3px solid rgb(var(--c-primary) / 0.9);
+    outline-offset: 2px;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  dialog::backdrop {
+    background: rgb(15 23 42 / 0.55);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
+  }
+  .card {
+    @apply rounded-lg border border-slate-200 bg-white shadow-sm;
+  }
+  .panel {
+    @apply rounded-b-lg border-t-4 border-primary bg-slate-100 p-4;
+  }
+  .link {
+    @apply font-medium text-primary underline-offset-2 hover:underline;
+  }
+  .label {
+    @apply mb-1 block text-sm font-semibold text-slate-800;
+  }
+  .input {
+    @apply block w-full rounded-md border border-slate-400 bg-white px-3 py-2 text-base text-slate-900 placeholder:text-slate-400
+      focus:border-primary-dark focus:outline-none focus:ring-4 focus:ring-primary-light disabled:bg-slate-100 disabled:text-slate-500
+      aria-[invalid=true]:border-red-600 aria-[invalid=true]:ring-red-100;
+  }
+  .sr-only-focusable:not(:focus) {
+    @apply sr-only;
+  }
+}
+
+/* MapLibre tweaks */
+.maplibregl-map {
+  font-family: var(--font-sans);
+}
+.maplibregl-ctrl-group button {
+  width: 36px !important;
+  height: 36px !important;
+}
+.maplibregl-canvas:focus-visible {
+  outline: 3px solid rgb(var(--c-primary));
+  outline-offset: -3px;
+}
+.cr-popup .maplibregl-popup-content {
+  padding: 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgb(15 23 42 / 0.45);
+}
