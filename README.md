@@ -1,6 +1,6 @@
-# CivicReport
+# Report
 
-CivicReport is an open, independently branded civic issue-reporting platform. Citizens report problems on a map (potholes, broken street lights, illegal dumping and so on) and follow them to resolution. City staff handle reports in a back-office with a configurable workflow.
+Report is an open, independently branded civic issue-reporting platform. Citizens report problems on a map (potholes, broken street lights, illegal dumping and so on) and follow them to resolution. City staff handle reports in a back-office with a configurable workflow.
 
 It reproduces the functionality and UX of a municipal reporting platform. The reference analysis is in [`docs/REFERENCE_ANALYSIS.md`](docs/REFERENCE_ANALYSIS.md). It uses a fictional brand ("Demo City"), and all of its identity comes from **one configuration file**.
 

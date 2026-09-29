@@ -2,7 +2,7 @@
   "name": "civicreport",
   "version": "1.0.0",
   "private": true,
-  "description": "CivicReport – open civic issue-reporting platform (map, reports, workflow, admin back-office).",
+  "description": "Report – open civic issue-reporting platform (map, reports, workflow, admin back-office).",
   "engines": {
     "node": ">=20.9"
   },

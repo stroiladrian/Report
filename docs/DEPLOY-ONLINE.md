@@ -30,10 +30,10 @@ The plan:
 2. In a Terminal, inside the project folder:
 
    ```bash
-   cd ~/Documents/CivicReport
+   cd ~/Documents/Report
    git init
    git add .
-   git commit -m "CivicReport"
+   git commit -m "Report"
    git branch -M main
    git remote add origin https://github.com/stroiladrian/Report.git
    git push -u origin main

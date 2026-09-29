@@ -2,7 +2,7 @@
 
 This document records what was observed on the reference civic-reporting platform
 (inspected on 2026-09-24 as an anonymous visitor, desktop 1280×720 and mobile 375×812)
-and how each observed behaviour maps onto CivicReport.
+and how each observed behaviour maps onto Report.
 
 The reference was used **only as a functional / UX specification**. No branding, logos,
 colours-as-identity, names, real report texts, photographs or personal data were copied.
@@ -14,7 +14,7 @@ component names visible in the public JavaScript bundle.
 
 ## 1. Routes discovered
 
-| Reference route | Behaviour | CivicReport route |
+| Reference route | Behaviour | Report route |
 |---|---|---|
 | `/` | Full-screen map of reports + floating filter panel + "Add report" CTA | `/` (also `/reports` alias) |
 | `/sesizari/{ID}` | Report detail opened as a **modal on top of the map** (intercepted route). Direct load renders the same content. Browser back closes the modal. | `/reports/{number}` (modal when navigated from the map, full page on direct load) |
@@ -30,7 +30,7 @@ component names visible in the public JavaScript bundle.
 * **Header** (brand-coloured bar): logo + two-line organisation name (left); desktop nav:
   "Services ▾", "Administration ▾", "My account", search icon, "Official gazette" link.
   Mobile: logo + "Menu ▾" + search icon.
-  → CivicReport: configurable nav links from `config/branding.ts`, account menu, language switch.
+  → Report: configurable nav links from `config/branding.ts`, account menu, language switch.
 * **Map** fills the viewport under the header. MapLibre GL, vector tiles, city boundary
   highlighted with a grey mask outside the municipality.
   * Reports drawn as small circles coloured by status (`pointLayer`) + a `labelsLayer`.
@@ -55,7 +55,7 @@ Internal statuses: *Registered, Planned, In progress, Resolved, Declined compete
 Public filter groups (plural labels): **Submitted, In progress, Resolved, Planned,
 Redirected**. Colours: submitted = dark blue, in progress = amber, resolved = green,
 planned = sky blue, redirected = violet, fallback slate.
-→ CivicReport: fully data-driven `report_statuses` table, each status belongs to a
+→ Report: fully data-driven `report_statuses` table, each status belongs to a
 `publicGroup`; transitions in `status_transitions`; colours & labels editable by super-admin.
 
 ## 3. Report detail (modal)
@@ -68,7 +68,7 @@ planned = sky blue, redirected = violet, fallback slate.
   * **History**: vertical timeline — date + time on the left, coloured dot, status pill.
 * Reporter identity is **never** shown publicly.
 * Photos (from preview card code) rendered as thumbnails with lightbox.
-→ CivicReport adds a mini map, public updates / official response, and attachments list.
+→ Report adds a mini map, public updates / official response, and attachments list.
 
 ## 4. New report flow **[ASSUMPTION — behind login]**
 
@@ -87,7 +87,7 @@ From client-side validation + component names in the public bundle:
   progress/success/error icon, 4:3 image previews, red delete button with
   "Are you sure you want to delete the file?" confirmation.
 * Account section uses a **step indicator** ("Completion steps", "step x / n").
-→ CivicReport implements this as a 5-step wizard + confirmation screen (Location →
+→ Report implements this as a 5-step wizard + confirmation screen (Location →
   Category → Description → Photos → Review → Confirmation with generated number).
 
 ## 5. Authentication observed
@@ -95,13 +95,13 @@ From client-side validation + component names in the public bundle:
 * Phone-number + SMS code (primary), national eID (OIDC), passkeys.
 * Registration collects identity, contact, address, ID document; GDPR + "false statements"
   consents.
-→ CivicReport: email/password (scrypt) + **phone OTP via `SmsProvider`**; email verification
+→ Report: email/password (scrypt) + **phone OTP via `SmsProvider`**; email verification
   and password reset via `EmailProvider`; mock providers write to a dev mailbox (`/dev/mailbox`).
   External identity providers are left as an extension point (`lib/auth/providers.ts`).
 
 ## 6. Responsive behaviour
 
-| Width | Reference behaviour | CivicReport |
+| Width | Reference behaviour | Report |
 |---|---|---|
 | ≥1024 | Full nav, floating filter card, hover previews | same |
 | 768–1023 | Condensed nav | same, "Menu" dropdown |

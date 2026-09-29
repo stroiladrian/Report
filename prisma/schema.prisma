@@ -1,4 +1,4 @@
-// CivicReport database schema (PostgreSQL)
+// Report database schema (PostgreSQL)
 // Run `npm run db:migrate` after editing to create a new migration.
 
 generator client {

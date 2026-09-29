@@ -2,5 +2,5 @@
   <rect width="1200" height="630" fill="#1f4fbf"/>
   <path d="M600 150a110 110 0 0 0-110 110c0 82 110 200 110 200s110-118 110-200a110 110 0 0 0-110-110Z" fill="#fff"/>
   <circle cx="600" cy="260" r="40" fill="#1f4fbf"/>
-  <text x="600" y="560" font-family="Arial, sans-serif" font-size="64" font-weight="700" fill="#fff" text-anchor="middle">CivicReport</text>
+  <text x="600" y="560" font-family="Arial, sans-serif" font-size="64" font-weight="700" fill="#fff" text-anchor="middle">Report</text>
 </svg>

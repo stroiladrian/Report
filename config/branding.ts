@@ -2,7 +2,7 @@
  * CENTRAL BRANDING CONFIGURATION
  * ------------------------------------------------------------------
  * Every piece of visual identity and organisation-specific information
- * used by CivicReport lives in this file. Replace the values below to
+ * used by Report lives in this file. Replace the values below to
  * re-brand the whole application (public site, admin, e-mails, SMS,
  * page titles, map defaults). See README → "Re-branding".
  *

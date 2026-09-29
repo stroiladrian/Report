@@ -38,10 +38,10 @@ psql --version   # psql (PostgreSQL) 16.x
 
 ## 2. Get the code
 
-If you already have the `CivicReport` folder, open a Terminal in it and skip to step 3:
+If you already have the `Report` folder, open a Terminal in it and skip to step 3:
 
 ```bash
-cd ~/Documents/CivicReport
+cd ~/Documents/Report
 ```
 
 From GitHub instead:
