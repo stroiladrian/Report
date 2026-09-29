@@ -47,6 +47,8 @@ export class LocalDiskStorage implements StorageProvider {
  */
 export class VercelBlobStorage implements StorageProvider {
   readonly name = "blob";
+  /** Match the access level of your Blob store (Vercel creates private stores by default). */
+  private access = (process.env.BLOB_ACCESS === "public" ? "public" : "private") as "public" | "private";
 
   private check(key: string) {
     if (!/^[a-z0-9/_.-]+$/i.test(key) || key.includes("..")) throw new Error("Invalid storage key");
@@ -54,30 +56,23 @@ export class VercelBlobStorage implements StorageProvider {
   async put(key: string, data: Buffer, contentType: string) {
     this.check(key);
     const { put } = await import("@vercel/blob");
-    await put(key, data, { access: "public", contentType, addRandomSuffix: false, allowOverwrite: true });
-  }
-  private async urlFor(key: string) {
-    this.check(key);
-    const { list } = await import("@vercel/blob");
-    const res = await list({ prefix: key, limit: 1 });
-    return res.blobs.find((b) => b.pathname === key)?.url ?? null;
+    await put(key, data, { access: this.access, contentType, addRandomSuffix: false, allowOverwrite: true });
   }
   async get(key: string) {
     try {
-      const url = await this.urlFor(key);
-      if (!url) return null;
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) return null;
-      return Buffer.from(await res.arrayBuffer());
+      this.check(key);
+      const { get } = await import("@vercel/blob");
+      const res = await get(key, { access: this.access, useCache: false });
+      if (!res || res.statusCode !== 200) return null;
+      return Buffer.from(await new Response(res.stream).arrayBuffer());
     } catch {
       return null;
     }
   }
   async delete(key: string) {
-    const url = await this.urlFor(key);
-    if (!url) return;
+    this.check(key);
     const { del } = await import("@vercel/blob");
-    await del(url);
+    await del(key);
   }
 }
 

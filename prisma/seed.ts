@@ -369,14 +369,14 @@ async function seedReports() {
     }
 
     const photos: Prisma.ReportAttachmentCreateWithoutReportInput[] = [];
-    const nPhotos = chance(0.65) ? 1 + Math.floor(rnd() * 3) : 0;
+    const nPhotos = process.env.SEED_PHOTOS === "0" ? 0 : chance(0.65) ? 1 + Math.floor(rnd() * 3) : 0;
     for (let p = 0; p < nPhotos; p++) {
       const key = `demo/${randomUUID()}.png`;
       const buf = placeholderPng(cat.color, i * 3 + p);
       await storage.put(key, buf, "image/png");
       photos.push({ storageKey: key, originalName: `foto-${p + 1}.png`, mimeType: "image/png", size: buf.length, kind: "CITIZEN", isPublic: true, createdAt, uploader: { connect: { id: reporter.id } } });
     }
-    if ((final === "resolved" || final === "closed") && chance(0.4)) {
+    if (process.env.SEED_PHOTOS !== "0" && (final === "resolved" || final === "closed") && chance(0.4)) {
       const key = `demo/${randomUUID()}.png`;
       const buf = placeholderPng("#15803d", i + 99);
       await storage.put(key, buf, "image/png");
