@@ -10,10 +10,9 @@
  */
 import { PrismaClient, type Prisma } from "@prisma/client";
 import { deflateSync } from "node:zlib";
-import { mkdirSync, writeFileSync } from "node:fs";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { branding } from "../config/branding";
+import { getStorage } from "../src/server/providers/storage";
 import { hashPassword } from "../src/lib/auth/crypto";
 import { DEFAULT_ROLE_PERMISSIONS, PERMISSION_DESCRIPTIONS, ROLE_KEYS } from "../src/lib/rbac/permissions";
 import { DEFAULT_STATUSES, DEFAULT_TRANSITIONS } from "../src/server/domain/workflow";
@@ -302,7 +301,7 @@ async function seedReports() {
     return;
   }
   const count = Number(process.env.SEED_REPORTS ?? 90);
-  const uploadDir = path.resolve(process.env.UPLOAD_DIR ?? "./storage/uploads");
+  const storage = getStorage();
   const statuses = await db.reportStatus.findMany();
   const sid = (k: string) => statuses.find((s) => s.key === k)!.id;
   const cats = await db.category.findMany({ where: { parentId: null }, include: { children: true } });
@@ -374,14 +373,13 @@ async function seedReports() {
     for (let p = 0; p < nPhotos; p++) {
       const key = `demo/${randomUUID()}.png`;
       const buf = placeholderPng(cat.color, i * 3 + p);
-      mkdirSync(path.join(uploadDir, "demo"), { recursive: true });
-      writeFileSync(path.join(uploadDir, key), buf);
+      await storage.put(key, buf, "image/png");
       photos.push({ storageKey: key, originalName: `foto-${p + 1}.png`, mimeType: "image/png", size: buf.length, kind: "CITIZEN", isPublic: true, createdAt, uploader: { connect: { id: reporter.id } } });
     }
     if ((final === "resolved" || final === "closed") && chance(0.4)) {
       const key = `demo/${randomUUID()}.png`;
       const buf = placeholderPng("#15803d", i + 99);
-      writeFileSync(path.join(uploadDir, key), buf);
+      await storage.put(key, buf, "image/png");
       photos.push({ storageKey: key, originalName: "dupa-interventie.png", mimeType: "image/png", size: buf.length, kind: "ADMIN", isPublic: true, createdAt: last, uploader: { connect: { id: assignee?.userId ?? admin.id } } });
     }
 

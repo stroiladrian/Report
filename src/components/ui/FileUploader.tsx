@@ -7,6 +7,28 @@ import { useI18n } from "@/lib/i18n/client";
 import { Icon } from "./Icon";
 import { useConfirm } from "./ConfirmDialog";
 
+/**
+ * Shrinks large photos in the browser (max 1920px, JPEG ~80%) so a report with several photos stays
+ * under the request-size limit of serverless hosts (Vercel ≈ 4.5 MB). Falls back to the original file.
+ */
+async function shrinkImage(file: File): Promise<File> {
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 700 * 1024) return file;
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const scale = Math.min(1, 1920 / Math.max(bmp.width, bmp.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bmp.width * scale);
+    canvas.height = Math.round(bmp.height * scale);
+    canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    bmp.close();
+    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", 0.8));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg", lastModified: Date.now() });
+  } catch {
+    return file;
+  }
+}
+
 export type PendingFile = { id: string; file: File; preview: string | null };
 
 const ACCEPT = appConfig.uploads.allowedMimeTypes.join(",");
@@ -39,18 +61,19 @@ export function FileUploader({
 
   useEffect(() => () => filesRef.current.forEach((f) => f.preview && URL.revokeObjectURL(f.preview)), []);
 
-  const add = (list: FileList | File[]) => {
+  const add = async (list: FileList | File[]) => {
     const errs: string[] = [];
-    const next = [...files];
-    for (const file of Array.from(list)) {
+    const next = [...filesRef.current];
+    for (const original of Array.from(list)) {
       if (next.length >= max) {
         errs.push(t("create.photos.tooMany", { max }));
         break;
       }
-      if (!accept.split(",").includes(file.type)) {
-        errs.push(t("create.photos.badType", { name: file.name }));
+      if (!accept.split(",").includes(original.type)) {
+        errs.push(t("create.photos.badType", { name: original.name }));
         continue;
       }
+      const file = await shrinkImage(original);
       if (file.size > maxSizeMB * 1024 * 1024) {
         errs.push(t("create.photos.tooBig", { name: file.name, size: maxSizeMB }));
         continue;
@@ -79,7 +102,7 @@ export function FileUploader({
         onDrop={(e) => {
           e.preventDefault();
           setDrag(false);
-          add(e.dataTransfer.files);
+          void add(e.dataTransfer.files);
         }}
         className={cn(
           "relative flex min-h-28 cursor-pointer flex-col focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 items-center justify-center gap-1 rounded-lg border-2 border-dashed px-4 py-5 text-center transition-colors",
@@ -101,7 +124,7 @@ export function FileUploader({
           className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           disabled={files.length >= max}
           onChange={(e) => {
-            if (e.target.files) add(e.target.files);
+            if (e.target.files) void add(Array.from(e.target.files));
             e.target.value = "";
           }}
         />

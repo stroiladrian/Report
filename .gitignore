@@ -2,7 +2,7 @@ node_modules/
 .next/
 out/
 coverage/
-storage/
+/storage/
 test-results/
 playwright-report/
 .env
