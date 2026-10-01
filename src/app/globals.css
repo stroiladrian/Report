@@ -60,6 +60,17 @@
 .maplibregl-map {
   font-family: var(--font-sans);
 }
+/* Line the map buttons up with the header padding (px-4 on mobile, sm:px-6):
+   MapLibre adds a 10px margin to every control, so offset the corner by the rest. */
+.maplibregl-ctrl-top-right {
+  top: 6px;
+  right: 6px;
+}
+@media (min-width: 640px) {
+  .maplibregl-ctrl-top-right {
+    right: 14px;
+  }
+}
 .maplibregl-ctrl-group button {
   width: 36px !important;
   height: 36px !important;

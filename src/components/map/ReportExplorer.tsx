@@ -114,10 +114,10 @@ export function ReportExplorer({ loggedIn }: { loggedIn: boolean }) {
         <MapView reports={points} heatmap={false} onOpen={(r) => openReport(r.number)} onBoundsChange={setBbox} className="absolute inset-0" />
 
         {/* Desktop filter card */}
-        <div className="absolute left-3 top-3 z-10 hidden max-h-[calc(100%-7rem)] w-72 overflow-y-auto rounded-md md:block">{panel}</div>
+        <div className="absolute left-6 top-4 z-10 hidden max-h-[calc(100%-7rem)] w-72 overflow-y-auto rounded-md md:block">{panel}</div>
 
         {/* Mobile filter trigger */}
-        <div className="absolute left-3 top-3 z-10 md:hidden">
+        <div className="absolute left-4 top-4 z-10 sm:left-6 md:hidden">
           <Button variant="outline" size="md" icon="filter" onClick={() => setMobileFilters(true)} className="shadow-card">
             {t("common.filters")}
             {count > 0 && <span className="rounded-full bg-primary px-1.5 text-xs text-white">{count}</span>}
@@ -176,7 +176,7 @@ export function ReportExplorer({ loggedIn }: { loggedIn: boolean }) {
             onClick={() => update({ view: "list", page: 1 })}
             aria-label={`${t("map.viewList")} (${points.length})`}
             title={t("map.viewList")}
-            className="absolute bottom-24 right-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white font-semibold shadow-card ring-1 ring-black/10 hover:bg-slate-50 sm:bottom-10 sm:w-auto sm:gap-2 sm:px-4"
+            className="absolute bottom-24 right-4 z-10 flex h-11 sm:right-6 w-11 items-center justify-center rounded-full bg-white font-semibold shadow-card ring-1 ring-black/10 hover:bg-slate-50 sm:bottom-10 sm:w-auto sm:gap-2 sm:px-4"
           >
             <Icon name="list" size={20} />
             <span className="hidden sm:inline">{t("map.viewList")}</span>
