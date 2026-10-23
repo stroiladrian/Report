@@ -78,13 +78,6 @@ const en = {
     noLocation: "Without location",
     reportsInView: "{count} reports",
     searchFilters: "Search & filters",
-    near: "{distance} away",
-    nearby: "Reports near you",
-    nearbyCenter: "Reports in this area",
-    details: "View details",
-    directions: "Directions",
-    noAddress: "No street address",
-    selected: "Selected: {title}",
   },
   filters: {
     title: "Filters",

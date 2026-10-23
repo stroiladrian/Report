@@ -1,7 +1,7 @@
 "use client";
 
 import type { GeoJSONSource, GeolocateControl, Map as MlMap, MapLayerMouseEvent, Popup } from "maplibre-gl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { branding } from "@config/branding";
 import { useI18n } from "@/lib/i18n/client";
@@ -20,18 +20,13 @@ type Props = {
   heatmap: boolean;
   /** Current public theme (map style + marker look). */
   theme: ThemeMode;
-  /** Highlighted report (tile with a primary ring). */
-  selectedId?: string | null;
-  /** Bump `n` to move the camera to `id` (e.g. when the visitor swipes the cards). */
-  focus?: { id: string; n: number } | null;
-  /** Pixels covered at the bottom (the report cards) – the camera keeps targets above them. */
+  /** Pixels covered at the bottom (the floating buttons) – the camera keeps targets above them. */
   bottomInset?: number;
   /** Marker tap/click. */
   onSelect: (r: MapReportDTO) => void;
   /** "Details" in the desktop hover card. */
   onOpen: (r: MapReportDTO) => void;
   onBoundsChange?: (bbox: Bbox, center: LngLat) => void;
-  onUserLocation?: (pos: LngLat) => void;
   className?: string;
 };
 
@@ -42,9 +37,9 @@ type FlashKey = "map.locationUnavailable" | "map.outsideArea" | "create.location
  * Interactive report map (MapLibre GL + any vector style, OpenFreeMap by default).
  * - clusters at low zoom, category tiles with a status dot when zoomed in
  * - dark / light style follows the public theme
- * - desktop: hover preview card; tap/click selects a report (the explorer shows its card)
+ * - desktop: hover preview card; tap/click opens the report
  */
-export function MapView({ reports, heatmap, theme, selectedId, focus, bottomInset = 0, onSelect, onOpen, onBoundsChange, onUserLocation, className }: Props) {
+export const MapView = memo(function MapView({ reports, heatmap, theme, bottomInset = 0, onSelect, onOpen, onBoundsChange, className }: Props) {
   const { t } = useI18n();
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
@@ -67,8 +62,8 @@ export function MapView({ reports, heatmap, theme, selectedId, focus, bottomInse
   const byId = useMemo(() => new Map(reports.map((r) => [r.id, r])), [reports]);
   const byIdRef = useRef(byId);
   byIdRef.current = byId;
-  const cb = useRef({ onSelect, onOpen, onBoundsChange, onUserLocation });
-  cb.current = { onSelect, onOpen, onBoundsChange, onUserLocation };
+  const cb = useRef({ onSelect, onOpen, onBoundsChange });
+  cb.current = { onSelect, onOpen, onBoundsChange };
   const themeRef = useRef(theme);
   const insetRef = useRef(bottomInset);
   insetRef.current = bottomInset;
@@ -128,7 +123,6 @@ export function MapView({ reports, heatmap, theme, selectedId, focus, bottomInse
         const b = branding.map.maxBounds;
         const { latitude: lat, longitude: lng } = pos.coords;
         if (b && (lng < b[0] || lng > b[2] || lat < b[1] || lat > b[3])) flash("map.outsideArea");
-        else cb.current.onUserLocation?.({ lat, lng });
       });
       map.on("error", (e) => {
         console.error("[map]", e.error);
@@ -193,13 +187,6 @@ export function MapView({ reports, heatmap, theme, selectedId, focus, bottomInse
           filter: ["!", ["has", "point_count"]],
           layout: { "icon-image": markerId(mode, false), "icon-allow-overlap": true, "icon-anchor": "center", "icon-size": ["interpolate", ["linear"], ["zoom"], 11, 0.8, 15, 1] },
         });
-        map.addLayer({
-          id: "points-active",
-          type: "symbol",
-          source: SRC,
-          filter: ["==", ["get", "id"], ""],
-          layout: { "icon-image": markerId(mode, true), "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-anchor": "center" },
-        });
         setStyleRev((n) => n + 1);
       };
 
@@ -223,8 +210,7 @@ export function MapView({ reports, heatmap, theme, selectedId, focus, bottomInse
           if (r) cb.current.onSelect(r);
         };
         map.on("click", "points", pick);
-        map.on("click", "points-active", pick);
-        for (const layer of ["points", "points-active", "clusters"]) {
+        for (const layer of ["points", "clusters"]) {
           map.on("mouseenter", layer, () => (map!.getCanvas().style.cursor = "pointer"));
           map.on("mouseleave", layer, () => (map!.getCanvas().style.cursor = ""));
         }
@@ -307,34 +293,12 @@ export function MapView({ reports, heatmap, theme, selectedId, focus, bottomInse
     (map.getSource(SRC) as GeoJSONSource | undefined)?.setData(geojson);
   }, [geojson, ready, styleRev]);
 
-  // Selected marker.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!ready || !map?.getLayer("points-active")) return;
-    map.setFilter("points-active", ["==", ["get", "id"], selectedId ?? ""]);
-    map.setFilter("points", selectedId ? ["all", ["!", ["has", "point_count"]], ["!=", ["get", "id"], selectedId]] : ["!", ["has", "point_count"]]);
-  }, [selectedId, ready, styleRev]);
-
-  // Camera follows the card the visitor swiped to.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!ready || !map || !focus) return;
-    const r = byIdRef.current.get(focus.id);
-    if (!r) return;
-    map.easeTo({
-      center: [r.lng, r.lat],
-      zoom: Math.max(map.getZoom(), 15),
-      padding: { top: 72, left: 0, right: 0, bottom: insetRef.current },
-      duration: 650,
-    });
-  }, [focus, ready]);
-
   // Heat-map toggle.
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map?.getLayer("heat")) return;
     map.setLayoutProperty("heat", "visibility", heatmap ? "visible" : "none");
-    for (const l of ["clusters", "cluster-count", "points", "points-active"]) map.setLayoutProperty(l, "visibility", heatmap ? "none" : "visible");
+    for (const l of ["clusters", "cluster-count", "points"]) map.setLayoutProperty(l, "visibility", heatmap ? "none" : "visible");
   }, [heatmap, ready, styleRev]);
 
   return (
@@ -358,4 +322,4 @@ export function MapView({ reports, heatmap, theme, selectedId, focus, bottomInse
       {popupEl && hovered && createPortal(<ReportPreviewCard report={hovered} onOpen={() => cb.current.onOpen(hovered)} />, popupEl)}
     </div>
   );
-}
+});

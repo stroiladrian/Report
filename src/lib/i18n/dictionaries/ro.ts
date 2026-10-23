@@ -80,13 +80,6 @@ const ro: Dictionary = {
     noLocation: "Fără locație",
     reportsInView: "{count} sesizări",
     searchFilters: "Căutare și filtre",
-    near: "La {distance}",
-    nearby: "Sesizări din apropiere",
-    nearbyCenter: "Sesizări din această zonă",
-    details: "Vezi detalii",
-    directions: "Indicații rutiere",
-    noAddress: "Fără adresă",
-    selected: "Selectat: {title}",
   },
   filters: {
     title: "Filtre",
