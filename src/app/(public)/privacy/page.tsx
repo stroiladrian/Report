@@ -14,7 +14,7 @@ export default async function PrivacyPage() {
     <>
       <article className="container-page max-w-3xl space-y-4 py-8 text-slate-800">
         <h1 className="text-3xl font-extrabold">{t("privacy.title")}</h1>
-        <p className="rounded bg-amber-50 p-3 text-sm text-amber-900">
+        <p className="rounded-sm bg-amber-50 p-3 text-sm text-amber-900">
           {ro ? "Text demonstrativ – înlocuiți-l cu nota de informare a organizației dumneavoastră." : "Demo text – replace with your organisation's privacy notice."}
         </p>
         <h2 className="text-xl font-bold">{ro ? "Ce date colectăm" : "What we collect"}</h2>

@@ -34,7 +34,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
         </h1>
         {canManage && <CreateStaffUser roles={roleOpts} departments={deptOpts} />}
       </div>
-      <AutoSubmitForm action="/admin/users" className="flex flex-wrap gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">
+      <AutoSubmitForm action="/admin/users" className="flex flex-wrap gap-2 rounded-lg bg-white p-3 shadow-xs ring-1 ring-slate-200">
         <label className="sr-only" htmlFor="uq">{t("common.search")}</label>
         <input id="uq" name="q" type="search" defaultValue={sp.q} placeholder={t("admin.users.search")} className="input min-w-56 flex-1 py-2 text-sm" />
         <select name="role" defaultValue={sp.role ?? ""} className="rounded-md border border-slate-300 bg-white px-2 py-2 text-sm" aria-label={t("admin.users.role")}>
@@ -45,7 +45,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
         </select>
         <button type="submit" className="rounded-md bg-primary px-3 text-white" aria-label={t("common.search")}><Icon name="search" size={18} /></button>
       </AutoSubmitForm>
-      <div className="overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
+      <div className="overflow-x-auto rounded-lg bg-white shadow-xs ring-1 ring-slate-200">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
             <tr>
@@ -67,7 +67,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                 <td className="px-3 py-2.5">{u.role.name}</td>
                 <td className="px-3 py-2.5 text-slate-700">{u.employee?.isActive ? u.employee.department.name : "—"}</td>
                 <td className="px-3 py-2.5">
-                  <span className={cn("rounded px-2 py-0.5 text-xs font-semibold", u.isActive ? "bg-green-100 text-green-800" : "bg-slate-200 text-slate-700")}>
+                  <span className={cn("rounded-sm px-2 py-0.5 text-xs font-semibold", u.isActive ? "bg-green-100 text-green-800" : "bg-slate-200 text-slate-700")}>
                     {u.isActive ? t("admin.users.active") : t("admin.users.inactive")}
                   </span>
                 </td>

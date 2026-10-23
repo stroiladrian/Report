@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
+import { cookies, headers } from "next/headers";
 import { branding } from "@config/branding";
+import { isAdminPath, parseTheme, PATH_HEADER, THEME_COOKIE } from "@/lib/theme/shared";
 import { brandCss } from "@/lib/brand-css";
 import { tr } from "@/lib/i18n/core";
 import { getLocale } from "@/lib/i18n/server";
@@ -22,18 +25,32 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-  themeColor: branding.colors.primary,
-};
+// Self-hosted at build time (no request to Google from visitors' browsers). Used by the public site only.
+const inter = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-inter", display: "swap" });
+
+/** Which look to render: the back-office keeps its original theme; the public site is dark unless the visitor chose light. */
+async function area() {
+  const [h, c] = await Promise.all([headers(), cookies()]);
+  const admin = isAdminPath(h.get(PATH_HEADER) ?? "/");
+  return { admin, theme: parseTheme(c.get(THEME_COOKIE)?.value) };
+}
+
+export async function generateViewport(): Promise<Viewport> {
+  const { admin, theme } = await area();
+  return {
+    width: "device-width",
+    initialScale: 1,
+    viewportFit: "cover",
+    themeColor: admin ? branding.colors.primary : branding.publicTheme[theme].background,
+  };
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = await getLocale();
+  const [locale, { admin, theme }] = await Promise.all([getLocale(), area()]);
   return (
-    // suppressHydrationWarning: browser extensions (e.g. Grammarly) add attributes to <html>/<body> before React loads.
-    <html lang={locale} suppressHydrationWarning>
+    // suppressHydrationWarning: browser extensions (e.g. Grammarly) add attributes to <html>/<body> before React loads,
+    // and ThemeScope updates class/data-theme after client-side navigation.
+    <html lang={locale} suppressHydrationWarning className={admin ? inter.variable : `${inter.variable} cr-public`} data-theme={admin ? undefined : theme}>
       <head>
         <style dangerouslySetInnerHTML={{ __html: brandCss() }} />
         {branding.font.fontStylesheet && <link rel="stylesheet" href={branding.font.fontStylesheet} />}

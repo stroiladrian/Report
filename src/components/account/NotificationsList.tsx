@@ -29,7 +29,7 @@ export function NotificationsList({ items }: { items: NotificationDTO[] }) {
           </Button>
         </div>
       )}
-      <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
+      <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-surface">
         {items.map((n) => (
           <li key={n.id} className={cn("flex gap-3 p-4", !n.readAt && "bg-primary-light/30")}>
             <span className={cn("mt-1 h-2.5 w-2.5 shrink-0 rounded-full", n.readAt ? "bg-transparent" : "bg-primary")} aria-hidden="true" />

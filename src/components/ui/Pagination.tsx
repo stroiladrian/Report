@@ -21,7 +21,7 @@ export function Pagination({
   const item = (p: number, content: React.ReactNode, aria: string, disabled = false, current = false) => {
     const cls = cn(
       "grid h-10 min-w-10 place-items-center rounded-md border px-2 text-sm font-semibold",
-      current ? "border-primary bg-primary text-white" : "border-slate-300 bg-white text-slate-800 hover:bg-slate-50",
+      current ? "border-primary bg-primary text-on-primary" : "border-slate-300 bg-surface text-slate-800 hover:bg-slate-50",
       disabled && "pointer-events-none opacity-40",
     );
     if (onPage)

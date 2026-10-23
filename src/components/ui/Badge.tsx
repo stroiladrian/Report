@@ -3,7 +3,7 @@ import { cn } from "@/lib/cn";
 export function Badge({ children, className, color }: { children: React.ReactNode; className?: string; color?: string }) {
   return (
     <span
-      className={cn("inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold", !color && "bg-slate-100 text-slate-700", className)}
+      className={cn("inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-semibold [.cr-public_&]:rounded-full [.cr-public_&]:px-2.5", !color && "bg-slate-100 text-slate-700", className)}
       style={color ? { backgroundColor: `${color}1f`, color } : undefined}
     >
       {children}
@@ -16,10 +16,10 @@ export function StatusBadge({ label, color, size = "md", className }: { label: s
   return (
     <span
       className={cn(
-        "inline-flex items-center font-bold text-white",
-        size === "sm" && "rounded px-2 py-0.5 text-xs",
-        size === "md" && "rounded px-2.5 py-1 text-sm",
-        size === "lg" && "w-full px-3 py-1.5 text-base",
+        "inline-flex items-center font-bold text-white [.cr-public_&]:rounded-full [.cr-public_&]:shadow-[inset_0_1px_0_rgb(255_255_255/0.25)]",
+        size === "sm" && "rounded-sm px-2 py-0.5 text-xs",
+        size === "md" && "rounded-sm px-2.5 py-1 text-sm",
+        size === "lg" && "w-full px-3 py-1.5 text-base [.cr-public_&]:px-4",
         className,
       )}
       style={{ backgroundColor: color }}

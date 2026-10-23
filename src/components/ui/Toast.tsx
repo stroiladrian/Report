@@ -17,7 +17,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <Ctx.Provider value={push}>
       {children}
-      <div aria-live="polite" aria-atomic="false" className="pointer-events-none fixed inset-x-0 top-3 z-[100] flex flex-col items-center gap-2 px-4">
+      <div aria-live="polite" aria-atomic="false" className="pointer-events-none fixed inset-x-0 top-3 z-100 flex flex-col items-center gap-2 px-4">
         {toasts.map((t) => (
           <div
             key={t.id}
@@ -26,7 +26,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               "pointer-events-auto flex max-w-md animate-pop-in items-center gap-2 rounded-md px-4 py-3 text-sm font-medium text-white shadow-lg",
               t.tone === "success" && "bg-green-700",
               t.tone === "error" && "bg-red-700",
-              t.tone === "info" && "bg-slate-800",
+              t.tone === "info" && "bg-slate-800 [[data-theme=dark]_&]:bg-surface-tertiary [[data-theme=dark]_&]:ring-1 [[data-theme=dark]_&]:ring-white/10",
             )}
           >
             <Icon name={t.tone === "error" ? "alert" : t.tone === "info" ? "info" : "check"} size={18} />

@@ -36,16 +36,16 @@ export function Stepper({
                 <span
                   className={cn(
                     "grid h-8 w-8 place-items-center rounded-full border-2 text-sm font-bold",
-                    done && "border-accent bg-accent text-white",
-                    active && "border-primary bg-primary text-white",
-                    !done && !active && "border-slate-300 bg-white text-slate-500",
+                    done && "border-cta bg-cta text-on-cta",
+                    active && "border-primary bg-primary text-on-primary",
+                    !done && !active && "border-slate-300 bg-surface text-slate-500",
                   )}
                 >
                   {done ? <Icon name="check" size={16} strokeWidth={3} /> : i + 1}
                 </span>
                 <span className={cn("hidden text-xs font-semibold sm:block", active ? "text-slate-900" : "text-slate-500")}>{s.label}</span>
               </button>
-              {i < steps.length - 1 && <span className={cn("mx-1 mt-[15px] h-0.5 min-w-4 flex-1", done ? "bg-accent/60" : "bg-slate-200")} />}
+              {i < steps.length - 1 && <span className={cn("mx-1 mt-[15px] h-0.5 min-w-4 flex-1", done ? "bg-cta/60" : "bg-slate-200")} />}
             </li>
           );
         })}

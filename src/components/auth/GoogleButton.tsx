@@ -14,7 +14,7 @@ export function GoogleButton({ returnTo }: { returnTo: string | null }) {
       <a
         href={href}
         onClick={() => setBusy(true)}
-        className="flex min-h-11 w-full items-center justify-center gap-3 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="flex min-h-11 w-full items-center justify-center gap-3 rounded-md border border-slate-300 bg-surface px-4 text-sm font-semibold text-slate-800 shadow-xs transition hover:bg-slate-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         {busy ? <Spinner size={18} /> : <GoogleG />}
         {t("auth.withGoogle")}

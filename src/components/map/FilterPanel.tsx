@@ -108,11 +108,11 @@ export function FilterPanel({ filters, statuses, categories, onChange, loggedIn,
       : t(PERIOD_LABEL[filters.period ?? (filters.mine ? "365d" : "30d")]);
 
   return (
-    <div className={cn("rounded-md bg-white px-3 shadow-card ring-1 ring-black/5", className)}>
+    <div className={cn("rounded-md bg-surface px-3 shadow-card ring-1 ring-black/5", className)}>
       {tip && (
         <div
           role="tooltip"
-          className="pointer-events-none fixed z-[60] -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white shadow-lg"
+          className="pointer-events-none fixed z-60 -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 [[data-theme=dark]_&]:bg-surface-tertiary px-2.5 py-1.5 text-xs font-semibold text-white shadow-lg"
           style={{ left: tip.x, top: tip.y }}
         >
           {tip.text}
@@ -161,7 +161,7 @@ export function FilterPanel({ filters, statuses, categories, onChange, loggedIn,
                   aria-checked={on}
                   onClick={() => setStatus(on ? selStatus.filter((x) => x !== s.key) : [...selStatus, s.key])}
                   className={cn(
-                    "flex min-h-9 w-full items-center gap-2 rounded px-1 text-left text-sm font-semibold hover:bg-slate-50",
+                    "flex min-h-9 w-full items-center gap-2 rounded-sm px-1 text-left text-sm font-semibold hover:bg-slate-50",
                     !on && "text-slate-400",
                   )}
                 >
@@ -181,7 +181,7 @@ export function FilterPanel({ filters, statuses, categories, onChange, loggedIn,
             const on = selCats.includes(c.slug);
             return (
               <li key={c.slug}>
-                <label className={cn("flex min-h-9 cursor-pointer items-center gap-2 rounded px-1 text-sm font-semibold hover:bg-slate-50", !on && "text-slate-500")}>
+                <label className={cn("flex min-h-9 cursor-pointer items-center gap-2 rounded-sm px-1 text-sm font-semibold hover:bg-slate-50", !on && "text-slate-500")}>
                   <input
                     type="checkbox"
                     checked={on}
@@ -212,7 +212,7 @@ export function FilterPanel({ filters, statuses, categories, onChange, loggedIn,
                 onClick={() => onChange({ period: p, from: null, to: null, page: 1 })}
                 className={cn(
                   "min-h-8 rounded-full border px-2.5 text-xs font-semibold",
-                  active ? "border-primary bg-primary text-white" : "border-slate-300 bg-white text-slate-700 hover:border-slate-500",
+                  active ? "border-primary bg-primary text-on-primary" : "border-slate-300 bg-surface text-slate-700 hover:border-slate-500",
                 )}
               >
                 {t(PERIOD_LABEL[p])}
