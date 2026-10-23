@@ -22,7 +22,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">{t("admin.audit.title")}</h1>
-      <AutoSubmitForm action="/admin/audit" className="flex flex-wrap gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">
+      <AutoSubmitForm action="/admin/audit" className="flex flex-wrap gap-2 rounded-lg bg-white p-3 shadow-xs ring-1 ring-slate-200">
         <select name="entityType" defaultValue={sp.entityType ?? ""} className="rounded-md border border-slate-300 bg-white px-2 py-2 text-sm" aria-label={t("admin.audit.entity")}>
           <option value="">{t("admin.audit.entity")}: {t("common.all")}</option>
           {types.map((x) => <option key={x} value={x}>{x}</option>)}
@@ -30,7 +30,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
         <input name="action" defaultValue={sp.action} placeholder={`${t("admin.audit.action")} (report.status…)`} className="input max-w-xs py-2 text-sm" aria-label={t("admin.audit.action")} />
         <button type="submit" className="rounded-md bg-primary px-4 text-sm font-semibold text-white">{t("common.search")}</button>
       </AutoSubmitForm>
-      <div className="overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
+      <div className="overflow-x-auto rounded-lg bg-white shadow-xs ring-1 ring-slate-200">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
             <tr>
@@ -46,7 +46,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
               <tr key={a.id} className="align-top">
                 <td className="whitespace-nowrap px-3 py-2 text-slate-700">{formatDateTime(a.createdAt, locale)}</td>
                 <td className="px-3 py-2">{a.actor ? `${a.actor.firstName} ${a.actor.lastName}` : t("admin.audit.system")}</td>
-                <td className="px-3 py-2"><code className="rounded bg-slate-100 px-1 text-xs">{a.action}</code></td>
+                <td className="px-3 py-2"><code className="rounded-sm bg-slate-100 px-1 text-xs">{a.action}</code></td>
                 <td className="px-3 py-2">
                   {a.entityType === "report" && a.entityId && numbers.get(a.entityId) ? (
                     <Link className="link" href={`/admin/reports/${numbers.get(a.entityId)}`}>{numbers.get(a.entityId)}</Link>

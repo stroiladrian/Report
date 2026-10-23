@@ -1,67 +1,92 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Dropdown } from "@heroui/react";
+import { RouterProvider } from "react-aria-components";
 import { appConfig } from "@config/app";
 import { cn } from "@/lib/cn";
 import { useI18n, useSetLocale } from "@/lib/i18n/client";
 import { api } from "@/lib/api-client";
-import { Icon } from "@/components/ui/Icon";
+import { mapBus, useMapBus } from "@/lib/map-bus";
+import { setTheme, useTheme } from "@/lib/theme/client";
+import { Icon, type IconName } from "@/components/ui/Icon";
 
 export type HeaderUser = { name: string; initials: string; staff: boolean; unread: number };
 type NavLink = { label: string; href: string; external?: boolean; children?: { label: string; href: string; external?: boolean }[] };
 
-function useOutside(ref: React.RefObject<HTMLElement | null>, onOut: () => void) {
-  useEffect(() => {
-    const h = (e: MouseEvent) => ref.current && !ref.current.contains(e.target as Node) && onOut();
-    const k = (e: KeyboardEvent) => e.key === "Escape" && onOut();
-    document.addEventListener("mousedown", h);
-    document.addEventListener("keydown", k);
-    return () => {
-      document.removeEventListener("mousedown", h);
-      document.removeEventListener("keydown", k);
-    };
-  }, [ref, onOut]);
+/** True while the full-screen map is the page (also while a report dialog is open over it). */
+function useOnMap() {
+  const pathname = usePathname();
+  const { explorer } = useMapBus();
+  return pathname === "/" || explorer;
 }
 
-function Dropdown({ label, children, align = "left", buttonClass, ariaLabel }: { label: React.ReactNode; children: React.ReactNode; align?: "left" | "right"; buttonClass?: string; ariaLabel?: string }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useOutside(ref, () => setOpen(false));
+/** Header bar: floats transparently over the map on the home screen, solid (blurred) elsewhere. */
+export function HeaderShell({ children }: { children: React.ReactNode }) {
+  const onMap = useOnMap();
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-haspopup="true"
-        aria-label={ariaLabel}
-        onClick={() => setOpen((o) => !o)}
-        className={cn("flex min-h-11 items-center gap-1 rounded-md px-3 font-semibold hover:bg-white/10", buttonClass)}
-      >
-        {label}
-      </button>
-      {open && (
-        <div
-          className={cn(
-            "absolute top-full z-50 mt-1 min-w-56 animate-pop-in overflow-hidden rounded-md bg-white py-1 text-slate-900 shadow-card ring-1 ring-slate-200",
-            align === "right" ? "right-0" : "left-0",
-          )}
-          onClick={(e) => (e.target as HTMLElement).closest("a,button[data-close]") && setOpen(false)}
-        >
-          {children}
-        </div>
+    <header
+      className={cn(
+        "z-30 text-foreground",
+        onMap
+          ? "pointer-events-none absolute inset-x-0 top-0 bg-linear-to-b from-background via-background/70 to-transparent pb-6 *:pointer-events-auto"
+          : "sticky top-0 border-b border-white/5 bg-background/80 backdrop-blur-xl [[data-theme=light]_&]:border-black/5",
       )}
-    </div>
+    >
+      {children}
+    </header>
   );
 }
 
-const itemCls = "flex w-full items-center gap-2 px-4 py-2.5 text-left text-[15px] hover:bg-slate-100";
+function IconButton({
+  icon,
+  label,
+  onClick,
+  href,
+  badge,
+  dot,
+}: {
+  icon: IconName;
+  label: string;
+  onClick?: () => void;
+  href?: string;
+  badge?: number;
+  dot?: boolean;
+}) {
+  const cls =
+    "relative grid h-11 w-11 place-items-center rounded-full text-foreground transition hover:bg-foreground/8 active:scale-95 focus-visible:outline-offset-0";
+  const inner = (
+    <>
+      <Icon name={icon} size={24} strokeWidth={1.9} />
+      {!!badge && (
+        <span className="absolute right-0.5 top-0.5 min-w-[18px] rounded-full bg-primary px-1 text-center text-[11px] font-bold leading-[18px] text-on-primary tabular-nums">
+          {badge}
+        </span>
+      )}
+      {dot && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-background bg-red-500" aria-hidden="true" />}
+    </>
+  );
+  return href ? (
+    <Link href={href} aria-label={label} title={label} className={cls}>
+      {inner}
+    </Link>
+  ) : (
+    <button type="button" onClick={onClick} aria-label={label} title={label} className={cls}>
+      {inner}
+    </button>
+  );
+}
+
+const itemCls = "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-foreground outline-none data-[focused=true]:bg-foreground/8 data-[hovered=true]:bg-foreground/8 cursor-pointer";
 
 export function HeaderNav({ user, links }: { user: HeaderUser | null; links: NavLink[] }) {
   const { t, locale } = useI18n();
   const setLocale = useSetLocale();
   const router = useRouter();
+  const onMap = useOnMap();
+  const { filterCount } = useMapBus();
+  const theme = useTheme() ?? "dark";
 
   const logout = async () => {
     await api("/api/auth/logout", { method: "POST", json: {} }).catch(() => undefined);
@@ -69,130 +94,99 @@ export function HeaderNav({ user, links }: { user: HeaderUser | null; links: Nav
     window.location.assign("/");
   };
 
-  const langSwitch = (
-    <div className="flex items-center gap-1 px-4 py-2" role="group" aria-label={t("common.language")}>
-      <Icon name="globe" size={16} className="text-slate-500" />
-      {appConfig.locales.map((l) => (
-        <button
-          key={l}
-          type="button"
-          data-close
-          onClick={() => setLocale(l)}
-          aria-pressed={l === locale}
-          className={cn("rounded px-2 py-1 text-sm font-bold uppercase", l === locale ? "bg-primary text-white" : "text-slate-700 hover:bg-slate-100")}
-        >
-          {l}
-        </button>
-      ))}
-    </div>
+  type Item = { id: string; label: string; icon: IconName; href?: string; external?: boolean; danger?: boolean; badge?: number; action?: () => void };
+  const accountItems: Item[] = user
+    ? [
+        { id: "account", label: t("header.account"), icon: "user", href: "/account" },
+        { id: "reports", label: t("header.myReports"), icon: "bookmark", href: "/account/reports" },
+        { id: "notifications", label: t("header.notifications"), icon: "bell", href: "/account/notifications", badge: user.unread },
+        ...(user.staff ? [{ id: "admin", label: t("header.admin"), icon: "shield" as const, href: "/admin" }] : []),
+      ]
+    : [{ id: "login", label: t("header.login"), icon: "user", href: "/login" }];
+  const linkItems: Item[] = links.flatMap((l) => (l.children?.length ? l.children : [l]).map((c) => ({ id: `link:${c.href}`, label: c.label, icon: "external" as const, href: c.href, external: c.external })));
+
+  const renderItem = (i: Item) => (
+    <Dropdown.Item
+      key={i.id}
+      id={i.id}
+      textValue={i.label}
+      href={i.href}
+      target={i.external ? "_blank" : undefined}
+      rel={i.external ? "noopener noreferrer" : undefined}
+      onAction={i.action}
+      className={cn(itemCls, i.danger && "text-red-400 [[data-theme=light]_&]:text-red-700")}
+    >
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full cr-well">
+        <Icon name={i.icon} size={17} />
+      </span>
+      <span className="min-w-0 flex-1 whitespace-nowrap">{i.label}</span>
+      {!!i.badge && <span className="rounded-full bg-red-600 px-2 text-xs font-bold text-white">{i.badge}</span>}
+    </Dropdown.Item>
   );
 
-  const accountItems = user ? (
-    <>
-      <div className="border-b border-slate-100 px-4 py-2 text-sm text-slate-500">{user.name}</div>
-      <Link href="/account" className={itemCls}>
-        <Icon name="user" size={18} /> {t("header.account")}
-      </Link>
-      <Link href="/account/reports" className={itemCls}>
-        <Icon name="list" size={18} /> {t("header.myReports")}
-      </Link>
-      <Link href="/account/notifications" className={itemCls}>
-        <Icon name="bell" size={18} /> {t("header.notifications")}
-        {user.unread > 0 && <span className="ml-auto rounded-full bg-red-600 px-2 text-xs font-bold text-white">{user.unread}</span>}
-      </Link>
-      {user.staff && (
-        <Link href="/admin" className={itemCls}>
-          <Icon name="shield" size={18} /> {t("header.admin")}
-        </Link>
-      )}
-      <button type="button" data-close onClick={logout} className={cn(itemCls, "border-t border-slate-100 text-red-700")}>
-        <Icon name="logout" size={18} /> {t("header.logout")}
-      </button>
-    </>
-  ) : (
-    <Link href="/login" className={itemCls}>
-      <Icon name="user" size={18} /> {t("header.login")}
-    </Link>
-  );
+  const segment = (active: boolean) =>
+    cn(
+      "flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition",
+      active ? "bg-primary text-on-primary shadow-sm" : "text-muted hover:text-foreground",
+    );
 
   return (
-    <nav className="ml-auto flex items-center gap-1" aria-label={t("common.menu")}>
-      {/* Desktop */}
-      <div className="hidden items-center gap-1 lg:flex">
-        {links.map((l) =>
-          l.children?.length ? (
-            <Dropdown key={l.label} label={<>{l.label} <Icon name="chevronDown" size={16} /></>}>
-              {l.children.map((c) => (
-                <a key={c.href} href={c.href} className={itemCls} {...(c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
-                  {c.label}
-                  {c.external && <Icon name="external" size={14} className="ml-auto text-slate-400" />}
-                </a>
-              ))}
-            </Dropdown>
-          ) : (
-            <a key={l.label} href={l.href} className="flex min-h-11 items-center rounded-md px-3 font-semibold hover:bg-white/10">
-              {l.label}
-            </a>
-          ),
-        )}
-        {user ? (
-          <Dropdown
-            align="right"
-            ariaLabel={t("header.account")}
-            label={
-              <>
-                <span className="relative grid h-8 w-8 place-items-center rounded-full bg-white/20 text-sm font-bold uppercase">
-                  {user.initials}
-                  {user.unread > 0 && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-primary bg-red-500" />}
-                </span>
-                <span>{t("header.account")}</span>
-                <Icon name="chevronDown" size={16} />
-              </>
-            }
+    <nav className="ml-auto flex items-center gap-0.5" aria-label={t("common.menu")}>
+      {onMap && <IconButton icon="search" label={t("map.searchFilters")} onClick={() => mapBus.emit("filters")} badge={filterCount} />}
+      <IconButton icon="bookmark" label={t("header.myReports")} href={user ? "/account/reports" : "/login?returnTo=%2Faccount%2Freports"} />
+      {onMap ? (
+        <IconButton icon="pin" label={t("map.locateMe")} onClick={() => mapBus.emit("locate")} />
+      ) : (
+        <IconButton icon="map" label={t("header.home")} href="/" />
+      )}
+
+      <RouterProvider navigate={(href) => router.push(href)}>
+        <Dropdown>
+          <Dropdown.Trigger
+            aria-label={user ? `${t("header.account")} – ${user.name}` : t("common.menu")}
+            className="relative ml-1 grid h-10 w-10 place-items-center rounded-full outline-none transition active:scale-95 data-[focus-visible=true]:ring-2 data-[focus-visible=true]:ring-primary"
           >
-            {accountItems}
-            <div className="border-t border-slate-100">{langSwitch}</div>
-          </Dropdown>
-        ) : (
-          <>
-            <Link href="/login" className="flex min-h-11 items-center rounded-md px-3 font-semibold hover:bg-white/10">
-              {t("header.account")}
-            </Link>
-            <Dropdown align="right" ariaLabel={t("common.language")} label={<><Icon name="globe" size={18} /><span className="uppercase">{locale}</span></>}>
-              {langSwitch}
-            </Dropdown>
-          </>
-        )}
-      </div>
-      {/* Mobile / tablet */}
-      <div className="flex items-center lg:hidden">
-        <Dropdown
-          align="right"
-          buttonClass="relative h-11 w-11 justify-center !px-0"
-          ariaLabel={t("common.menu")}
-          label={
-            <>
-              <Icon name="menu" size={26} />
-              {user && user.unread > 0 && (
-                <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-primary bg-red-500" aria-hidden="true" />
-              )}
-            </>
-          }
-        >
-          {accountItems}
-          {links.map((l) => (
-            <div key={l.label} className="border-t border-slate-100">
-              <p className="px-4 pb-1 pt-2 text-xs font-bold uppercase tracking-wide text-slate-500">{l.label}</p>
-              {(l.children ?? [l]).map((c) => (
-                <a key={c.href} href={c.href} className={itemCls} {...("external" in c && c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
-                  {c.label}
-                </a>
-              ))}
+            {user ? (
+              <span className="grid h-10 w-10 place-items-center rounded-full text-sm font-bold uppercase text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.35)] [background:radial-gradient(circle_at_30%_25%,#c9f3ff,#7aa7ff_45%,#7b5cf0_100%)]">
+                {user.initials}
+              </span>
+            ) : (
+              <span className="grid h-10 w-10 place-items-center rounded-full cr-well">
+                <Icon name="menu" size={20} />
+              </span>
+            )}
+            {user && user.unread > 0 && <span className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-background bg-red-500" aria-hidden="true" />}
+          </Dropdown.Trigger>
+          <Dropdown.Popover placement="bottom end" className="w-[300px] rounded-3xl border border-white/8 bg-overlay p-2 shadow-overlay [[data-theme=light]_&]:border-black/5">
+            {user && <p className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-muted">{user.name}</p>}
+            <Dropdown.Menu aria-label={t("common.menu")} className="outline-none">
+              {[
+                ...accountItems.map(renderItem),
+                ...linkItems.map(renderItem),
+                ...(user ? [renderItem({ id: "logout", label: t("header.logout"), icon: "logout", danger: true, action: logout })] : []),
+              ]}
+            </Dropdown.Menu>
+            {/* Appearance + language: segmented controls (kept outside the menu so they don't close it). */}
+            <div className="mt-1 space-y-2 border-t border-foreground/8 px-1 pt-3 pb-1">
+              <div role="group" aria-label={t("header.theme")} className="flex gap-1 rounded-full p-1 cr-well">
+                <button type="button" aria-pressed={theme === "dark"} onClick={() => setTheme("dark")} className={segment(theme === "dark")}>
+                  <Icon name="moon" size={15} /> {t("header.themeDark")}
+                </button>
+                <button type="button" aria-pressed={theme === "light"} onClick={() => setTheme("light")} className={segment(theme === "light")}>
+                  <Icon name="sun" size={15} /> {t("header.themeLight")}
+                </button>
+              </div>
+              <div role="group" aria-label={t("common.language")} className="flex gap-1 rounded-full p-1 cr-well">
+                {appConfig.locales.map((l) => (
+                  <button key={l} type="button" aria-pressed={l === locale} onClick={() => setLocale(l)} className={cn(segment(l === locale), "uppercase")}>
+                    {l === appConfig.locales[0] && <Icon name="globe" size={15} />} {l}
+                  </button>
+                ))}
+              </div>
             </div>
-          ))}
-          <div className="border-t border-slate-100">{langSwitch}</div>
+          </Dropdown.Popover>
         </Dropdown>
-      </div>
+      </RouterProvider>
     </nav>
   );
 }

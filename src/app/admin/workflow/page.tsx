@@ -32,7 +32,7 @@ export default async function WorkflowPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{t("admin.workflow.title")}</h1>
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="rounded-lg bg-white p-4 shadow-xs ring-1 ring-slate-200">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-bold">{t("admin.workflow.statuses")}</h2>
           <StatusEditor mode="new" groups={groups} />
@@ -56,7 +56,7 @@ export default async function WorkflowPage() {
                 <tr key={s.id} className={s.isActive ? "" : "opacity-50"}>
                   <td className="px-2 py-2"><code className="text-xs">{s.key}</code></td>
                   <td className="px-2 py-2">
-                    <span className="rounded px-2 py-0.5 text-xs font-bold text-white" style={{ backgroundColor: s.color }}>{s.label[locale]}</span>
+                    <span className="rounded-sm px-2 py-0.5 text-xs font-bold text-white" style={{ backgroundColor: s.color }}>{s.label[locale]}</span>
                   </td>
                   <td className="px-2 py-2"><code className="text-xs">{s.publicGroup}</code></td>
                   <td className="px-2 py-2">{yes(s.isInitial)}</td>
@@ -70,7 +70,7 @@ export default async function WorkflowPage() {
           </table>
         </div>
       </section>
-      <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+      <section className="rounded-lg bg-white p-4 shadow-xs ring-1 ring-slate-200">
         <h2 className="mb-3 font-bold">{t("admin.workflow.transitions")}</h2>
         <TransitionMatrix statuses={rows} transitions={transitions.map((x) => ({ fromStatusId: x.fromStatusId, toStatusId: x.toStatusId, requiresComment: x.requiresComment }))} canEdit />
       </section>

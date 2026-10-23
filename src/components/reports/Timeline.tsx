@@ -18,7 +18,7 @@ export function ReportTimeline({ history, locale, showActor }: { history: Histor
             <span className="relative z-10 mt-1 h-4 w-4 rounded-full border-2 border-slate-100" style={{ backgroundColor: h.status.color }} aria-hidden="true" />
           </div>
           <div className="min-w-0">
-            <span className="inline-block rounded px-2 py-0.5 text-sm font-bold text-white" style={{ backgroundColor: h.status.color }}>
+            <span className="inline-block rounded-sm px-2 py-0.5 text-sm font-bold text-white" style={{ backgroundColor: h.status.color }}>
               {h.status.label}
             </span>
             {h.note && <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{h.note}</p>}

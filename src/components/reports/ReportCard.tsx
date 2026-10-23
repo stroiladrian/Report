@@ -9,7 +9,7 @@ import { Icon } from "@/components/ui/Icon";
 export function ReportCard({ report, locale, href, className }: { report: ListReportDTO; locale: Locale; href: string; className?: string }) {
   return (
     <article
-      className={cn("group relative flex gap-3 rounded-lg border border-slate-200 bg-white p-3 transition-shadow hover:shadow-card focus-within:shadow-card", className)}
+      className={cn("group relative flex gap-3 rounded-lg border border-slate-200 bg-surface p-3 transition-shadow hover:shadow-card focus-within:shadow-card", className)}
     >
       {report.photo ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -25,7 +25,7 @@ export function ReportCard({ report, locale, href, className }: { report: ListRe
           <span className="text-xs font-semibold text-slate-500">{report.number}</span>
         </div>
         <h3 className="mt-1 font-semibold leading-snug">
-          <Link href={href} className="after:absolute after:inset-0 focus:outline-none">
+          <Link href={href} className="after:absolute after:inset-0 focus:outline-hidden">
             {report.title}
           </Link>
         </h3>

@@ -1,69 +1,93 @@
 "use client";
 
-import type { GeoJSONSource, Map as MlMap, MapLayerMouseEvent, Popup } from "maplibre-gl";
+import type { GeoJSONSource, GeolocateControl, Map as MlMap, MapLayerMouseEvent, Popup } from "maplibre-gl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { branding } from "@config/branding";
 import { useI18n } from "@/lib/i18n/client";
+import { mapBus } from "@/lib/map-bus";
+import { categoryIcon } from "@/lib/category-icons";
+import { mapStyleFor, type ThemeMode } from "@/lib/theme/shared";
 import type { MapReportDTO } from "@/types/reports";
 import { ReportPreviewCard } from "@/components/reports/ReportPreviewCard";
+import { installMarkerImages, markerId } from "./markers";
 
 export type Bbox = [number, number, number, number];
+export type LngLat = { lat: number; lng: number };
 
 type Props = {
   reports: MapReportDTO[];
   heatmap: boolean;
+  /** Current public theme (map style + marker look). */
+  theme: ThemeMode;
+  /** Highlighted report (tile with a primary ring). */
+  selectedId?: string | null;
+  /** Bump `n` to move the camera to `id` (e.g. when the visitor swipes the cards). */
+  focus?: { id: string; n: number } | null;
+  /** Pixels covered at the bottom (the report cards) – the camera keeps targets above them. */
+  bottomInset?: number;
+  /** Marker tap/click. */
+  onSelect: (r: MapReportDTO) => void;
+  /** "Details" in the desktop hover card. */
   onOpen: (r: MapReportDTO) => void;
-  onBoundsChange?: (bbox: Bbox) => void;
+  onBoundsChange?: (bbox: Bbox, center: LngLat) => void;
+  onUserLocation?: (pos: LngLat) => void;
   className?: string;
 };
 
 const SRC = "reports";
+type FlashKey = "map.locationUnavailable" | "map.outsideArea" | "create.location.locationDenied";
 
 /**
  * Interactive report map (MapLibre GL + any vector style, OpenFreeMap by default).
- * - clusters at low zoom, individual status-coloured points when zoomed in
- * - heat-map mode
- * - desktop: hover preview card; touch: tap opens the report
+ * - clusters at low zoom, category tiles with a status dot when zoomed in
+ * - dark / light style follows the public theme
+ * - desktop: hover preview card; tap/click selects a report (the explorer shows its card)
  */
-export function MapView({ reports, heatmap, onOpen, onBoundsChange, className }: Props) {
+export function MapView({ reports, heatmap, theme, selectedId, focus, bottomInset = 0, onSelect, onOpen, onBoundsChange, onUserLocation, className }: Props) {
   const { t } = useI18n();
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
+  const geoRef = useRef<GeolocateControl | null>(null);
   const popupRef = useRef<Popup | null>(null);
   const [popupEl, setPopupEl] = useState<HTMLDivElement | null>(null);
   const [hovered, setHovered] = useState<MapReportDTO | null>(null);
   const [ready, setReady] = useState(false);
+  const [styleRev, setStyleRev] = useState(0);
   const [failed, setFailed] = useState<false | "network" | "webgl">(false);
   const [notice, setNotice] = useState<string | null>(null);
   const noticeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const flashRef = useRef<(k: "map.locationUnavailable" | "map.outsideArea" | "create.location.locationDenied") => void>(() => undefined);
+  const flashRef = useRef<(k: FlashKey) => void>(() => undefined);
   flashRef.current = (k) => {
     setNotice(t(k));
     clearTimeout(noticeTimer.current);
     noticeTimer.current = setTimeout(() => setNotice(null), 6000);
   };
-  const flash = (k: "map.locationUnavailable" | "map.outsideArea" | "create.location.locationDenied") => flashRef.current(k);
+  const flash = (k: FlashKey) => flashRef.current(k);
   const byId = useMemo(() => new Map(reports.map((r) => [r.id, r])), [reports]);
   const byIdRef = useRef(byId);
   byIdRef.current = byId;
-  const onOpenRef = useRef(onOpen);
-  onOpenRef.current = onOpen;
-  const onBoundsRef = useRef(onBoundsChange);
-  onBoundsRef.current = onBoundsChange;
+  const cb = useRef({ onSelect, onOpen, onBoundsChange, onUserLocation });
+  cb.current = { onSelect, onOpen, onBoundsChange, onUserLocation };
+  const themeRef = useRef(theme);
+  const insetRef = useRef(bottomInset);
+  insetRef.current = bottomInset;
   const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const geojson = useMemo(
     () => ({
       type: "FeatureCollection" as const,
-      features: reports.map((r) => ({
+      features: reports.map((r, i) => ({
         type: "Feature" as const,
+        id: i + 1,
         geometry: { type: "Point" as const, coordinates: [r.lng, r.lat] },
-        properties: { id: r.id, color: r.color },
+        properties: { id: r.id, color: r.color, icon: categoryIcon(r.categoryKey) },
       })),
     }),
     [reports],
   );
+  const geojsonRef = useRef(geojson);
+  geojsonRef.current = geojson;
 
   // Create the map once.
   useEffect(() => {
@@ -75,7 +99,7 @@ export function MapView({ reports, heatmap, onOpen, onBoundsChange, className }:
       const touch = window.matchMedia("(hover: none)").matches;
       map = new maplibregl.Map({
         container: container.current,
-        style: branding.map.styleUrl,
+        style: mapStyleFor(themeRef.current),
         center: [branding.map.defaultLocation.lng, branding.map.defaultLocation.lat],
         zoom: branding.map.defaultZoom,
         minZoom: branding.map.minZoom,
@@ -85,13 +109,17 @@ export function MapView({ reports, heatmap, onOpen, onBoundsChange, className }:
         cooperativeGestures: false,
       });
       mapRef.current = map;
-      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+      installMarkerImages(map, (mode) => branding.publicTheme[mode].primary);
+      // Phones pinch to zoom; desktops get +/- buttons.
+      if (!touch) map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
       const geo = new maplibregl.GeolocateControl({
         positionOptions: { enableHighAccuracy: true, timeout: 10_000 },
         trackUserLocation: false,
         showAccuracyCircle: true,
         fitBoundsOptions: { maxZoom: 16 },
       });
+      geoRef.current = geo;
+      // The button itself is hidden on the public site – the header's location icon triggers it.
       map.addControl(geo, "top-right");
       geo.on("error", () => flash(window.isSecureContext ? "create.location.locationDenied" : "map.locationUnavailable"));
       // MapLibre fires "outofmaxbounds" (and does not move) when the position is outside maxBounds.
@@ -100,6 +128,7 @@ export function MapView({ reports, heatmap, onOpen, onBoundsChange, className }:
         const b = branding.map.maxBounds;
         const { latitude: lat, longitude: lng } = pos.coords;
         if (b && (lng < b[0] || lng > b[2] || lat < b[1] || lat > b[3])) flash("map.outsideArea");
+        else cb.current.onUserLocation?.({ lat, lng });
       });
       map.on("error", (e) => {
         console.error("[map]", e.error);
@@ -112,10 +141,13 @@ export function MapView({ reports, heatmap, onOpen, onBoundsChange, className }:
         }
       });
 
-      map.on("load", () => {
-        if (!map) return;
-        setFailed(false);
-        map.addSource(SRC, { type: "geojson", data: { type: "FeatureCollection", features: [] }, cluster: true, clusterMaxZoom: 13, clusterRadius: 38 });
+      /** Source + layers; re-run after every style switch (dark/light). */
+      const install = () => {
+        if (!map || map.getSource(SRC)) return;
+        const mode = themeRef.current;
+        const dark = mode === "dark";
+        const primary = branding.publicTheme[mode].primary;
+        map.addSource(SRC, { type: "geojson", data: geojsonRef.current, cluster: true, clusterMaxZoom: 13, clusterRadius: 42 });
         map.addLayer({
           id: "heat",
           type: "heatmap",
@@ -139,11 +171,11 @@ export function MapView({ reports, heatmap, onOpen, onBoundsChange, className }:
           source: SRC,
           filter: ["has", "point_count"],
           paint: {
-            "circle-color": branding.colors.primary,
-            "circle-opacity": 0.88,
-            "circle-stroke-color": "#ffffff",
+            "circle-color": dark ? "#232328" : "#ffffff",
+            "circle-stroke-color": primary,
             "circle-stroke-width": 2,
-            "circle-radius": ["step", ["get", "point_count"], 14, 10, 18, 50, 24, 200, 30],
+            "circle-stroke-opacity": 0.9,
+            "circle-radius": ["step", ["get", "point_count"], 17, 10, 21, 50, 26, 200, 31],
           },
         });
         map.addLayer({
@@ -151,41 +183,48 @@ export function MapView({ reports, heatmap, onOpen, onBoundsChange, className }:
           type: "symbol",
           source: SRC,
           filter: ["has", "point_count"],
-          layout: { "text-field": ["get", "point_count_abbreviated"], "text-size": 13, "text-font": [...branding.map.labelFont] },
-          paint: { "text-color": "#ffffff" },
+          layout: { "text-field": ["get", "point_count_abbreviated"], "text-size": 14, "text-font": [...branding.map.labelFont], "text-allow-overlap": true },
+          paint: { "text-color": dark ? "#f4f4f6" : "#1c1c20" },
         });
         map.addLayer({
           id: "points",
-          type: "circle",
+          type: "symbol",
           source: SRC,
           filter: ["!", ["has", "point_count"]],
-          paint: {
-            "circle-color": ["get", "color"],
-            "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 5, 16, 8, 19, 11],
-            "circle-stroke-color": "#ffffff",
-            "circle-stroke-width": ["case", ["boolean", ["feature-state", "hover"], false], 3, 1.5],
-            "circle-opacity": 0.95,
-          },
+          layout: { "icon-image": markerId(mode, false), "icon-allow-overlap": true, "icon-anchor": "center", "icon-size": ["interpolate", ["linear"], ["zoom"], 11, 0.8, 15, 1] },
         });
+        map.addLayer({
+          id: "points-active",
+          type: "symbol",
+          source: SRC,
+          filter: ["==", ["get", "id"], ""],
+          layout: { "icon-image": markerId(mode, true), "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-anchor": "center" },
+        });
+        setStyleRev((n) => n + 1);
+      };
+
+      map.on("load", () => {
+        if (!map) return;
+        setFailed(false);
+        install();
+        // Compact attribution starts expanded on small screens; keep it as the (i) button until tapped.
+        container.current?.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show");
 
         map.on("click", "clusters", async (e) => {
           const f = e.features?.[0];
           if (!f) return;
           const src = map!.getSource(SRC) as GeoJSONSource;
           const zoom = await src.getClusterExpansionZoom(f.properties!.cluster_id as number);
-          map!.easeTo({ center: (f.geometry as GeoJSON.Point).coordinates as [number, number], zoom: zoom + 0.3 });
+          map!.easeTo({ center: (f.geometry as GeoJSON.Point).coordinates as [number, number], zoom: zoom + 0.3, padding: { top: 0, left: 0, right: 0, bottom: insetRef.current } });
         });
-        let hoverId: string | number | undefined;
-        const clearHover = () => {
-          if (hoverId !== undefined) map!.setFeatureState({ source: SRC, id: hoverId }, { hover: false });
-          hoverId = undefined;
-        };
-        map.on("click", "points", (e: MapLayerMouseEvent) => {
+        const pick = (e: MapLayerMouseEvent) => {
           const id = e.features?.[0]?.properties?.id as string | undefined;
           const r = id ? byIdRef.current.get(id) : undefined;
-          if (r) onOpenRef.current(r);
-        });
-        for (const layer of ["points", "clusters"]) {
+          if (r) cb.current.onSelect(r);
+        };
+        map.on("click", "points", pick);
+        map.on("click", "points-active", pick);
+        for (const layer of ["points", "points-active", "clusters"]) {
           map.on("mouseenter", layer, () => (map!.getCanvas().style.cursor = "pointer"));
           map.on("mouseleave", layer, () => (map!.getCanvas().style.cursor = ""));
         }
@@ -194,18 +233,13 @@ export function MapView({ reports, heatmap, onOpen, onBoundsChange, className }:
             const f = e.features?.[0];
             if (!f) return;
             const id = f.properties?.id as string;
-            if (hoverId !== f.id) {
-              clearHover();
-              hoverId = f.id;
-              if (hoverId !== undefined) map!.setFeatureState({ source: SRC, id: hoverId }, { hover: true });
-            }
             const r = byIdRef.current.get(id);
             if (!r) return;
             clearTimeout(closeTimer.current);
             setHovered(r);
             const el = document.createElement("div");
             if (!popupRef.current) {
-              popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: true, maxWidth: "340px", offset: 12, className: "cr-popup" });
+              popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: true, maxWidth: "340px", offset: 22, className: "cr-popup" });
             }
             const p = popupRef.current;
             if (!p.isOpen() || (p as unknown as { _rid?: string })._rid !== id) {
@@ -216,10 +250,7 @@ export function MapView({ reports, heatmap, onOpen, onBoundsChange, className }:
               setPopupEl(el);
             }
           });
-          map.on("mouseleave", "points", () => {
-            clearHover();
-            scheduleClose();
-          });
+          map.on("mouseleave", "points", () => scheduleClose());
         }
         const scheduleClose = () => {
           clearTimeout(closeTimer.current);
@@ -231,46 +262,86 @@ export function MapView({ reports, heatmap, onOpen, onBoundsChange, className }:
         };
         const emitBounds = () => {
           const b = map!.getBounds();
-          onBoundsRef.current?.([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
+          const c = map!.getCenter();
+          cb.current.onBoundsChange?.([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], { lat: c.lat, lng: c.lng });
         };
         map.on("moveend", emitBounds);
         emitBounds();
         setReady(true);
       });
+      // After a theme switch (setStyle) the sources/layers are gone: add them again.
+      map.on("style.load", () => {
+        if (map?.loaded() || map?.isStyleLoaded()) install();
+      });
     })().catch((err) => {
       console.error("[map] failed to initialise", err);
       setFailed(/webgl/i.test(String((err as Error)?.message ?? err)) ? "webgl" : "network");
     });
+    const offLocate = mapBus.on("locate", () => {
+      if (!geoRef.current) return;
+      if (!window.isSecureContext) return flash("map.locationUnavailable");
+      geoRef.current.trigger();
+    });
     return () => {
       cancelled = true;
+      offLocate();
       popupRef.current?.remove();
       map?.remove();
       mapRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Theme switch → swap the map style (layers are re-installed on "style.load").
+  useEffect(() => {
+    const map = mapRef.current;
+    if (themeRef.current === theme) return;
+    themeRef.current = theme;
+    if (map) map.setStyle(mapStyleFor(theme));
+  }, [theme]);
 
   // Push data updates.
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
-    const src = map.getSource(SRC) as GeoJSONSource | undefined;
-    // promoteId-like behaviour: give features numeric ids for feature-state
-    src?.setData({ ...geojson, features: geojson.features.map((f, i) => ({ ...f, id: i + 1 })) });
-  }, [geojson, ready]);
+    (map.getSource(SRC) as GeoJSONSource | undefined)?.setData(geojson);
+  }, [geojson, ready, styleRev]);
+
+  // Selected marker.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map?.getLayer("points-active")) return;
+    map.setFilter("points-active", ["==", ["get", "id"], selectedId ?? ""]);
+    map.setFilter("points", selectedId ? ["all", ["!", ["has", "point_count"]], ["!=", ["get", "id"], selectedId]] : ["!", ["has", "point_count"]]);
+  }, [selectedId, ready, styleRev]);
+
+  // Camera follows the card the visitor swiped to.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map || !focus) return;
+    const r = byIdRef.current.get(focus.id);
+    if (!r) return;
+    map.easeTo({
+      center: [r.lng, r.lat],
+      zoom: Math.max(map.getZoom(), 15),
+      padding: { top: 72, left: 0, right: 0, bottom: insetRef.current },
+      duration: 650,
+    });
+  }, [focus, ready]);
 
   // Heat-map toggle.
   useEffect(() => {
     const map = mapRef.current;
-    if (!ready || !map) return;
+    if (!ready || !map?.getLayer("heat")) return;
     map.setLayoutProperty("heat", "visibility", heatmap ? "visible" : "none");
-    for (const l of ["clusters", "cluster-count", "points"]) map.setLayoutProperty(l, "visibility", heatmap ? "none" : "visible");
-  }, [heatmap, ready]);
+    for (const l of ["clusters", "cluster-count", "points", "points-active"]) map.setLayoutProperty(l, "visibility", heatmap ? "none" : "visible");
+  }, [heatmap, ready, styleRev]);
 
   return (
     <div className={className}>
       <div ref={container} className="h-full w-full" role="region" aria-label={t("map.label")} />
       {failed && (
-        <div className="absolute inset-0 grid place-items-center bg-slate-100 p-6 text-center text-slate-600">
+        <div className="absolute inset-0 grid place-items-center bg-background p-6 text-center text-muted">
           <div className="space-y-2">
             <p>{failed === "webgl" ? t("map.webglError") : t("map.mapError")}</p>
             <button type="button" className="link" onClick={() => window.location.reload()}>
@@ -280,13 +351,11 @@ export function MapView({ reports, heatmap, onOpen, onBoundsChange, className }:
         </div>
       )}
       {notice && (
-        <div role="status" className="absolute inset-x-3 top-16 z-20 mx-auto max-w-sm rounded-md bg-slate-900/90 px-3 py-2 text-center text-sm font-medium text-white shadow-lg md:top-3">
+        <div role="status" className="absolute inset-x-4 top-20 z-20 mx-auto max-w-sm rounded-2xl px-4 py-3 text-center text-sm font-medium cr-glass">
           {notice}
         </div>
       )}
-      {popupEl &&
-        hovered &&
-        createPortal(<ReportPreviewCard report={hovered} onOpen={() => onOpenRef.current(hovered)} />, popupEl)}
+      {popupEl && hovered && createPortal(<ReportPreviewCard report={hovered} onOpen={() => cb.current.onOpen(hovered)} />, popupEl)}
     </div>
   );
 }

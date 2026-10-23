@@ -20,7 +20,7 @@ export function LoadingState({ label, className }: { label: string; className?: 
 }
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded bg-slate-200", className)} aria-hidden="true" />;
+  return <div className={cn("animate-pulse rounded-sm bg-slate-200", className)} aria-hidden="true" />;
 }
 
 export function EmptyState({

@@ -37,15 +37,15 @@ export function PhotoGallery({ photos, size = 96 }: { photos: AttachmentDTO[]; s
       </ul>
       <Modal open={index !== null} onClose={() => setIndex(null)} title={cur ? `${t("map.photo", { n: (index ?? 0) + 1 })} · ${(index ?? 0) + 1} / ${n}` : ""} size="xl" closeLabel={t("common.close")}>
         {cur && (
-          <div className="relative flex items-center justify-center bg-slate-900" style={{ minHeight: "50vh" }}>
+          <div className="relative flex items-center justify-center bg-slate-900 [[data-theme=dark]_&]:bg-black" style={{ minHeight: "50vh" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={cur.url} alt={t("map.photo", { n: (index ?? 0) + 1 })} className="max-h-[70vh] w-auto max-w-full object-contain" />
             {n > 1 && (
               <>
-                <button type="button" onClick={() => go(-1)} aria-label={t("common.previous")} className="absolute left-2 grid h-11 w-11 place-items-center rounded-full bg-white/90 shadow hover:bg-white">
+                <button type="button" onClick={() => go(-1)} aria-label={t("common.previous")} className="absolute left-2 grid h-11 w-11 place-items-center rounded-full bg-surface/90 shadow-sm hover:bg-surface">
                   <Icon name="chevronLeft" />
                 </button>
-                <button type="button" onClick={() => go(1)} aria-label={t("common.next")} className="absolute right-2 grid h-11 w-11 place-items-center rounded-full bg-white/90 shadow hover:bg-white">
+                <button type="button" onClick={() => go(1)} aria-label={t("common.next")} className="absolute right-2 grid h-11 w-11 place-items-center rounded-full bg-surface/90 shadow-sm hover:bg-surface">
                   <Icon name="chevronRight" />
                 </button>
               </>

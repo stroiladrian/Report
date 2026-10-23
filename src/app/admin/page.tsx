@@ -39,7 +39,7 @@ export default async function AdminDashboard() {
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {tiles.map((tile) => (
           <li key={tile.label}>
-            <Link href={tile.href} className="block rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-primary">
+            <Link href={tile.href} className="block rounded-lg bg-white p-4 shadow-xs ring-1 ring-slate-200 hover:ring-primary">
               <span className="flex items-center gap-2 text-sm font-semibold text-slate-600">
                 <Icon name={tile.icon} size={16} /> {tile.label}
               </span>
@@ -49,16 +49,16 @@ export default async function AdminDashboard() {
         ))}
       </ul>
       <div className="grid gap-4 lg:grid-cols-3">
-        <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200 lg:col-span-2">
+        <section className="rounded-lg bg-white p-4 shadow-xs ring-1 ring-slate-200 lg:col-span-2">
           <h2 className="mb-3 font-bold">{t("admin.stats.last30")}</h2>
           <DailyBars data={s.last30} locale={locale} label={t("admin.stats.last30")} />
         </section>
-        <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+        <section className="rounded-lg bg-white p-4 shadow-xs ring-1 ring-slate-200">
           <h2 className="mb-3 font-bold">{t("filters.status")}</h2>
           <ul className="space-y-1.5 text-sm">
             {s.statusCounts.map((st) => (
               <li key={st.key}>
-                <Link href={`/admin/reports?status=${st.key}`} className="flex items-center gap-2 rounded px-1 py-0.5 hover:bg-slate-50">
+                <Link href={`/admin/reports?status=${st.key}`} className="flex items-center gap-2 rounded-sm px-1 py-0.5 hover:bg-slate-50">
                   <span className="h-3 w-3 rounded-full" style={{ backgroundColor: st.color }} aria-hidden="true" />
                   <span className="flex-1">{st.label}</span>
                   <span className="font-semibold tabular-nums">{st.count}</span>
@@ -70,11 +70,11 @@ export default async function AdminDashboard() {
             {t("admin.stats.avgResolution")}: <b className="text-slate-900">{t("admin.stats.days", { n: s.avgResolutionDays })}</b>
           </p>
         </section>
-        <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200 lg:col-span-2">
+        <section className="rounded-lg bg-white p-4 shadow-xs ring-1 ring-slate-200 lg:col-span-2">
           <h2 className="mb-3 font-bold">{t("admin.stats.byCategory")}</h2>
           <HBars rows={s.byCategory} empty={t("admin.reports.empty")} />
         </section>
-        <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
+        <section className="rounded-lg bg-white p-4 shadow-xs ring-1 ring-slate-200">
           <h2 className="mb-3 font-bold">{t("admin.stats.byDepartment")}</h2>
           <HBars rows={s.byDepartment.map((d) => ({ name: d.name ?? t("admin.reports.unassigned"), count: d.count }))} empty={t("admin.reports.empty")} />
         </section>

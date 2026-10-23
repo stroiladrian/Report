@@ -15,11 +15,19 @@ import { EmptyState, ErrorState, LoadingState, Spinner } from "@/components/ui/S
 import { Pagination } from "@/components/ui/Pagination";
 import { ReportCard } from "@/components/reports/ReportCard";
 import { FilterPanel } from "./FilterPanel";
-import { MapView, type Bbox } from "./MapView";
+import { MapView, type Bbox, type LngLat } from "./MapView";
+import { NearbyCard, distanceM } from "./NearbyCards";
+import { branding } from "@config/branding";
+import { mapBus } from "@/lib/map-bus";
+import { useTheme } from "@/lib/theme/client";
 
 type Facets = { statuses: StatusGroupDTO[]; categories: CategoryFacet[] };
 
-/** Home screen: full-viewport map + floating filters + optional list panel. Filter state lives in the URL. */
+/**
+ * Home screen: full-screen map under a floating header, report cards along the bottom
+ * (swipe ↔ map follows; tap a marker → its card), filters in a panel / bottom sheet,
+ * optional list panel. Filter state lives in the URL.
+ */
 export function ReportExplorer({ loggedIn }: { loggedIn: boolean }) {
   const { t, locale } = useI18n();
   const router = useRouter();
@@ -44,6 +52,12 @@ export function ReportExplorer({ loggedIn }: { loggedIn: boolean }) {
   const [error, setError] = useState(false);
   const [bbox, setBbox] = useState<Bbox | null>(null);
   const [mobileFilters, setMobileFilters] = useState(false);
+  const [desktopFilters, setDesktopFilters] = useState(true);
+  const theme = useTheme() ?? branding.publicTheme.defaultMode;
+  const [userPos, setUserPos] = useState<LngLat | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [focus, setFocus] = useState<{ id: string; n: number } | null>(null);
+  const [inset, setInset] = useState(0);
   const [reload, setReload] = useState(0);
 
   const update = useCallback(
@@ -104,25 +118,120 @@ export function ReportExplorer({ loggedIn }: { loggedIn: boolean }) {
   const count = activeFilterCount(filters);
   const listOpen = filters.view === "list";
 
+  // Header ↔ explorer bridge (search/filters + locate buttons live in the header).
+  useEffect(() => {
+    mapBus.set({ explorer: true });
+    return () => mapBus.set({ explorer: false, filterCount: 0 });
+  }, []);
+  useEffect(() => mapBus.set({ filterCount: count }), [count]);
+  useEffect(
+    () =>
+      mapBus.on("filters", () => {
+        if (window.matchMedia("(min-width: 768px)").matches) setDesktopFilters((v) => !v);
+        else setMobileFilters(true);
+      }),
+    [],
+  );
+
+  // Cards: nearest reports to the visitor (or to the town centre until they share their location).
+  const anchor = userPos ?? branding.map.defaultLocation;
+  const cards = useMemo(() => {
+    const sorted = points
+      .map((r) => ({ r, d: distanceM(anchor, r) }))
+      .sort((a, b) => a.d - b.d)
+      .slice(0, 40);
+    if (selectedId && !sorted.some((x) => x.r.id === selectedId)) {
+      const r = points.find((p) => p.id === selectedId);
+      if (r) sorted.unshift({ r, d: distanceM(anchor, r) });
+    }
+    return sorted;
+  }, [points, anchor.lat, anchor.lng, selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const rail = useRef<HTMLDivElement>(null);
+  const bottom = useRef<HTMLDivElement>(null);
+  const cardEls = useRef(new Map<string, HTMLElement>());
+  const programmatic = useRef(false);
+
+  // Bottom overlay height → camera padding + attribution offset.
+  useEffect(() => {
+    const el = bottom.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setInset(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [listOpen]);
+
+  const scrollToCard = (id: string) => {
+    const el = cardEls.current.get(id);
+    if (!el || !rail.current) return;
+    programmatic.current = true;
+    el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    window.setTimeout(() => (programmatic.current = false), 700);
+  };
+
+  // Marker tap: first tap selects (and brings its card into view), a second tap opens it.
+  const onMarker = (r: MapReportDTO) => {
+    if (selectedId === r.id) return openReport(r.number);
+    setSelectedId(r.id);
+    requestAnimationFrame(() => scrollToCard(r.id));
+  };
+
+  // Swiping the cards: the card closest to the centre becomes the selection and the map follows.
+  const scrollTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const onRailScroll = () => {
+    clearTimeout(scrollTimer.current);
+    scrollTimer.current = setTimeout(() => {
+      const box = rail.current?.getBoundingClientRect();
+      if (!box || programmatic.current) return;
+      const mid = box.left + box.width / 2;
+      let best: { id: string; d: number } | null = null;
+      for (const [id, el] of cardEls.current) {
+        const b = el.getBoundingClientRect();
+        const d = Math.abs(b.left + b.width / 2 - mid);
+        if (!best || d < best.d) best = { id, d };
+      }
+      if (best && best.id !== selectedId) {
+        setSelectedId(best.id);
+        setFocus((f) => ({ id: best!.id, n: (f?.n ?? 0) + 1 }));
+      }
+    }, 140);
+  };
+
   const panel = (
     <FilterPanel filters={filters} statuses={facets.statuses} categories={facets.categories} onChange={update} loggedIn={loggedIn} />
   );
 
   return (
-    <div className="relative flex h-[calc(100dvh-3.5rem)] overflow-hidden sm:h-[calc(100dvh-4rem)]">
+    <div className="relative flex h-dvh overflow-hidden bg-background" style={{ "--cr-map-bottom": `${inset}px` } as React.CSSProperties}>
       <div className="relative min-w-0 flex-1">
-        <MapView reports={points} heatmap={false} onOpen={(r) => openReport(r.number)} onBoundsChange={setBbox} className="absolute inset-0" />
+        <MapView
+          reports={points}
+          heatmap={false}
+          theme={theme}
+          selectedId={selectedId}
+          focus={focus}
+          bottomInset={listOpen ? 0 : inset}
+          onSelect={onMarker}
+          onOpen={(r) => openReport(r.number)}
+          onBoundsChange={(b) => setBbox(b)}
+          onUserLocation={(p) => {
+            setUserPos(p);
+            setSelectedId(null);
+            requestAnimationFrame(() => rail.current?.scrollTo({ left: 0, behavior: "smooth" }));
+          }}
+          className="absolute inset-0"
+        />
 
-        {/* Desktop filter card */}
-        <div className="absolute left-6 top-4 z-10 hidden max-h-[calc(100%-7rem)] w-72 overflow-y-auto rounded-md md:block">{panel}</div>
+        {/* Desktop filter card (toggled by the header's search button) */}
+        {desktopFilters && (
+          <div
+            className="absolute left-6 top-20 z-10 hidden w-80 overflow-y-auto rounded-3xl md:block cr-glass"
+            style={{ maxHeight: `calc(100% - ${inset + 96}px)` }}
+          >
+            {panel}
+          </div>
+        )}
 
-        {/* Mobile filter trigger */}
-        <div className="absolute left-4 top-4 z-10 sm:left-6 md:hidden">
-          <Button variant="outline" size="md" icon="filter" onClick={() => setMobileFilters(true)} className="shadow-card">
-            {t("common.filters")}
-            {count > 0 && <span className="rounded-full bg-primary px-1.5 text-xs text-white">{count}</span>}
-          </Button>
-        </div>
         <Drawer open={mobileFilters} onClose={() => setMobileFilters(false)} title={t("common.filters")} side="bottom" closeLabel={t("common.close")}>
           <div className="p-3">
             <FilterPanel
@@ -140,51 +249,73 @@ export function ReportExplorer({ loggedIn }: { loggedIn: boolean }) {
           </div>
         </Drawer>
 
-        {filters.mine && (
-          <div className="absolute left-1/2 top-3 z-10 hidden -translate-x-1/2 rounded-full bg-slate-900/85 px-3 py-1.5 text-sm font-semibold text-white shadow md:block">
-            {t("filters.mineActive")}
-          </div>
-        )}
-
-        {(loading || error) && (
-          <div className="absolute left-1/2 top-16 z-10 -translate-x-1/2 md:top-3" aria-live="polite">
+        {(filters.mine || loading || error) && (
+          <div className="absolute left-1/2 top-[76px] z-10 flex -translate-x-1/2 flex-col items-center gap-2" aria-live="polite">
+            {filters.mine && <span className="rounded-full px-3 py-1.5 text-sm font-semibold cr-glass">{t("filters.mineActive")}</span>}
             {loading ? (
-              <span className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-sm font-medium shadow-card">
+              <span className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium cr-glass">
                 <Spinner size={16} /> {t("map.loading")}
               </span>
-            ) : (
+            ) : error ? (
               <button type="button" onClick={() => setReload((x) => x + 1)} className="flex items-center gap-2 rounded-full bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-card">
                 <Icon name="alert" size={16} /> {t("map.error")} {t("common.retry")}
               </button>
-            )}
+            ) : null}
           </div>
         )}
 
-        {/* Bottom controls */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex justify-center pb-[env(safe-area-inset-bottom)]">
-          <Link
-            href="/submit"
-            className="pointer-events-auto inline-flex min-h-12 items-center gap-2 rounded-full border-2 border-white bg-accent px-6 text-lg font-bold text-white shadow-lg hover:bg-accent-dark"
-          >
-            <Icon name="plus" size={20} strokeWidth={3} />
-            {t("header.reportIssue")}
-          </Link>
-        </div>
+        {/* Bottom: actions row + swipeable report cards */}
         {!listOpen && (
-          <button
-            type="button"
-            onClick={() => update({ view: "list", page: 1 })}
-            aria-label={`${t("map.viewList")} (${points.length})`}
-            title={t("map.viewList")}
-            className="absolute bottom-24 right-4 z-10 flex h-11 sm:right-6 w-11 items-center justify-center rounded-full bg-white font-semibold shadow-card ring-1 ring-black/10 hover:bg-slate-50 sm:bottom-10 sm:w-auto sm:gap-2 sm:px-4"
-          >
-            <Icon name="list" size={20} />
-            <span className="hidden sm:inline">{t("map.viewList")}</span>
-            {/* Mobile: count as a small badge on the icon; desktop: inline pill */}
-            <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-primary px-1 text-center text-[11px] font-bold leading-5 text-white tabular-nums sm:static sm:min-w-0 sm:bg-slate-100 sm:px-1.5 sm:text-xs sm:font-semibold sm:leading-normal sm:text-slate-900">
-              {points.length}
-            </span>
-          </button>
+          <div ref={bottom} className="pointer-events-none absolute inset-x-0 bottom-0 z-10 pb-[max(env(safe-area-inset-bottom),12px)]">
+            <div className="pointer-events-auto mx-auto flex max-w-[1400px] items-center justify-between gap-2 px-4 sm:px-6">
+              <button
+                type="button"
+                onClick={() => update({ view: "list", page: 1 })}
+                aria-label={`${t("map.viewList")} (${points.length})`}
+                className="flex h-11 items-center gap-2 rounded-full pl-3.5 pr-2 text-[15px] font-semibold text-foreground transition active:scale-95 cr-glass"
+              >
+                <Icon name="list" size={18} />
+                {t("map.viewList")}
+                <span className="rounded-full bg-foreground/10 px-2 py-0.5 text-xs tabular-nums">{points.length}</span>
+              </button>
+              <Link
+                href="/submit"
+                className="cr-gloss inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-[15px] font-semibold text-on-primary transition hover:bg-primary-dark active:scale-95"
+              >
+                <Icon name="plus" size={18} strokeWidth={2.6} />
+                {t("header.reportIssue")}
+              </Link>
+            </div>
+            {cards.length > 0 && (
+              <div
+                ref={rail}
+                onScroll={onRailScroll}
+                role="list"
+                aria-label={userPos ? t("map.nearby") : t("map.nearbyCenter")}
+                className="cr-snap pointer-events-auto mt-1 flex gap-3 overflow-x-auto px-4 pb-1 sm:px-6 md:[mask-image:linear-gradient(90deg,transparent,#000_24px,#000_calc(100%-24px),transparent)]"
+              >
+                {cards.map(({ r, d }) => (
+                  <div role="listitem" key={r.id} className="flex">
+                    <NearbyCard
+                      ref={(el) => {
+                        if (el) cardEls.current.set(r.id, el);
+                        else cardEls.current.delete(r.id);
+                      }}
+                      report={r}
+                      distance={userPos ? d : null}
+                      selected={selectedId === r.id}
+                      onSelect={() => {
+                        setSelectedId(r.id);
+                        setFocus((f) => ({ id: r.id, n: (f?.n ?? 0) + 1 }));
+                      }}
+                      onOpen={() => openReport(r.number)}
+                    />
+                  </div>
+                ))}
+                <div aria-hidden="true" className="w-1 shrink-0" />
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -192,11 +323,11 @@ export function ReportExplorer({ loggedIn }: { loggedIn: boolean }) {
       {listOpen && (
         <aside
           aria-label={t("list.title")}
-          className="absolute inset-0 z-20 flex flex-col bg-slate-50 md:static md:w-[420px] md:shrink-0 md:border-l md:border-slate-200 lg:w-[460px]"
+          className="absolute inset-0 z-20 flex flex-col bg-background pt-16 md:static md:w-[420px] md:shrink-0 md:border-l md:border-slate-200 lg:w-[460px]"
         >
-          <div className="flex items-center gap-2 border-b border-slate-200 bg-white px-3 py-2">
+          <div className="flex items-center gap-2 border-b border-slate-200 px-4 py-2">
             <h2 className="text-lg font-bold">{t("list.title")}</h2>
-            {list && <span className="text-sm text-slate-500">({list.total})</span>}
+            {list && <span className="text-sm text-muted">({list.total})</span>}
             <div className="ml-auto flex items-center gap-1">
               <Button size="sm" variant="outline" icon="filter" className="md:hidden" onClick={() => setMobileFilters(true)}>
                 {count > 0 ? count : ""}
@@ -206,10 +337,10 @@ export function ReportExplorer({ loggedIn }: { loggedIn: boolean }) {
               </Button>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white px-3 py-2 text-sm">
+          <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-2 text-sm">
             <label className="flex items-center gap-1.5">
               <span className="font-semibold">{t("filters.sort")}:</span>
-              <select value={filters.sort} onChange={(e) => update({ sort: e.target.value as FilterState["sort"], page: 1 })} className="rounded border border-slate-300 bg-white px-2 py-1">
+              <select value={filters.sort} onChange={(e) => update({ sort: e.target.value as FilterState["sort"], page: 1 })} className="rounded-full border border-slate-300 bg-surface-secondary px-3 py-1">
                 <option value="newest">{t("filters.sortNewest")}</option>
                 <option value="oldest">{t("filters.sortOldest")}</option>
                 <option value="updated">{t("filters.sortUpdated")}</option>

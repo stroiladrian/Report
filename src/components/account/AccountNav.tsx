@@ -27,12 +27,12 @@ export function AccountNav({ unread }: { unread: number }) {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex min-h-11 items-center gap-2 whitespace-nowrap rounded-md px-3 font-semibold",
-                  active ? "bg-primary text-white" : "text-slate-700 hover:bg-slate-100",
+                  active ? "bg-primary text-on-primary" : "text-slate-700 hover:bg-slate-100",
                 )}
               >
                 <Icon name={i.icon} size={18} />
                 {i.label}
-                {!!i.badge && <span className={cn("ml-auto rounded-full px-2 text-xs", active ? "bg-white text-primary" : "bg-red-600 text-white")}>{i.badge}</span>}
+                {!!i.badge && <span className={cn("ml-auto rounded-full px-2 text-xs", active ? "bg-surface text-primary" : "bg-red-600 text-white")}>{i.badge}</span>}
               </Link>
             </li>
           );

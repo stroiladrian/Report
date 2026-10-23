@@ -17,11 +17,11 @@ function Section({ n, title, children }: { n: number; title: string; children: R
     <fieldset className="grid gap-4 border-b border-slate-200 py-5 last:border-b-0 md:grid-cols-[13rem_1fr]">
       <legend className="contents">
         <span className="flex items-center gap-3 text-lg font-bold">
-          <span className="grid h-7 w-7 place-items-center rounded-full bg-primary text-sm text-white">{n}</span>
+          <span className="grid h-7 w-7 place-items-center rounded-full bg-primary text-sm text-on-primary">{n}</span>
           {title}
         </span>
       </legend>
-      <div className="grid gap-4 rounded-md border-t-4 border-primary bg-surface p-4 sm:grid-cols-2">{children}</div>
+      <div className="grid gap-4 rounded-md border-t-4 border-primary bg-subtle p-4 sm:grid-cols-2">{children}</div>
     </fieldset>
   );
 }

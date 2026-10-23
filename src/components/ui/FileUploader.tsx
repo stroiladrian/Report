@@ -139,7 +139,7 @@ export function FileUploader({
       {files.length > 0 && (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {files.map((f) => (
-            <li key={f.id} className="relative aspect-[4/3] overflow-hidden rounded-md bg-slate-200">
+            <li key={f.id} className="relative aspect-4/3 overflow-hidden rounded-md bg-slate-200">
               {f.preview ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={f.preview} alt={f.file.name} className="h-full w-full object-cover" />
@@ -153,7 +153,7 @@ export function FileUploader({
                 type="button"
                 onClick={() => remove(f)}
                 aria-label={`${t("create.photos.remove")}: ${f.file.name}`}
-                className="absolute bottom-1 right-1 grid h-9 w-9 place-items-center rounded bg-red-600 text-white shadow hover:bg-red-700"
+                className="absolute bottom-1 right-1 grid h-9 w-9 place-items-center rounded-sm bg-red-600 text-white shadow-sm hover:bg-red-700"
               >
                 <Icon name="trash" size={18} />
               </button>
