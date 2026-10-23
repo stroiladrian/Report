@@ -29,9 +29,11 @@ export function HeaderShell({ children }: { children: React.ReactNode }) {
     <header
       className={cn(
         "z-30 text-foreground",
+        // Over the map the bar is a plain gradient scrim (no blur): it is composited once
+        // instead of being re-filtered on every map frame.
         onMap
           ? "pointer-events-none absolute inset-x-0 top-0 bg-linear-to-b from-background via-background/70 to-transparent pb-6 *:pointer-events-auto"
-          : "sticky top-0 border-b border-white/5 bg-background/80 backdrop-blur-xl [[data-theme=light]_&]:border-black/5",
+          : "sticky top-0 border-b border-white/5 bg-background [[data-theme=light]_&]:border-black/5",
       )}
     >
       {children}
