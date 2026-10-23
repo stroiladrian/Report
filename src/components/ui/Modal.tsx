@@ -184,7 +184,7 @@ export function Drawer({
   }[side];
   return (
     <div className="fixed inset-0 z-70">
-      <div className="absolute inset-0 animate-fade-in bg-slate-900/55 [.cr-public_&]:bg-black/60 [.cr-public_&]:backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 animate-fade-in bg-slate-900/55 [.cr-public_&]:bg-black/65" onClick={onClose} aria-hidden="true" />
       <div
         ref={panel}
         role="dialog"

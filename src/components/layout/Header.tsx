@@ -26,7 +26,7 @@ export async function Header() {
           {/* Brand orb: the logo on a soft gradient sphere (like the avatar in the reference design). */}
           <span className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full shadow-[inset_0_1px_0_rgb(255_255_255/0.35),0_6px_16px_-6px_rgb(var(--c-primary)/0.8)] [background:radial-gradient(circle_at_30%_25%,#e9e3ff,rgb(var(--c-primary))_45%,#5b6cf0_100%)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={branding.logo.src} alt="" width={branding.logo.width} height={branding.logo.height} className="h-6 w-auto drop-shadow-sm" />
+            <img src={branding.logo.src} alt="" width={branding.logo.width} height={branding.logo.height} className="h-6 w-auto" />
           </span>
           <span className="min-w-0 text-[13px] font-semibold leading-tight text-foreground sm:text-sm">
             <span className="block truncate">{words.slice(0, half).join(" ")}</span>

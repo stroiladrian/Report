@@ -248,7 +248,7 @@ export function LocationPicker({
         <div ref={container} className="h-full w-full" aria-label={t("create.location.hint")} role="application" />
         {/* Fixed centre pin */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full" aria-hidden="true">
-          <svg width="40" height="52" viewBox="0 0 40 52" className="drop-shadow-md">
+          <svg width="40" height="52" viewBox="0 0 40 52">
             <path d="M20 51S3 32.5 3 19a17 17 0 1 1 34 0c0 13.5-17 32-17 32z" fill={branding.colors.accent} stroke="#fff" strokeWidth="3" />
             <circle cx="20" cy="19" r="6.5" fill="#fff" />
           </svg>

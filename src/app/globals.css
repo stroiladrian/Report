@@ -188,8 +188,7 @@
     color: var(--foreground);
   }
   .cr-public dialog::backdrop {
-    background: rgb(0 0 0 / 0.6);
-    backdrop-filter: blur(2px);
+    background: rgb(0 0 0 / 0.65);
   }
   .cr-public[data-theme="dark"] ::selection {
     background: rgb(var(--c-primary) / 0.35);
@@ -206,7 +205,7 @@
   }
   .cr-public[data-theme="dark"] .card {
     border-color: rgb(255 255 255 / 0.07);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 12px 32px -16px rgb(0 0 0 / 0.7);
+    box-shadow: 0 8px 20px -14px rgb(0 0 0 / 0.7);
   }
   .cr-public .panel {
     border-radius: 1.25rem;
@@ -221,10 +220,7 @@
   .cr-public .cr-btn--primary {
     border-color: transparent;
     background-image: linear-gradient(180deg, rgb(255 255 255 / 0.18), rgb(255 255 255 / 0) 55%);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.35),
-      inset 0 -1px 0 rgb(0 0 0 / 0.12),
-      0 8px 20px -10px rgb(var(--c-primary) / 0.9);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), inset 0 -1px 0 rgb(0 0 0 / 0.12);
   }
   .cr-public .cr-btn--cta {
     border-width: 0;
@@ -255,13 +251,16 @@
   }
 }
 
-/* ── Glass surfaces used by the map overlays ─────────────────────────────── */
+/*
+ * Floating surfaces over the map (buttons, filter panel, notices).
+ * Deliberately opaque and blur-free: a translucent or blurred layer over the map
+ * canvas has to be re-composited on every frame while panning/zooming, which
+ * stutters on integrated graphics.
+ */
 @utility cr-glass {
-  background-color: color-mix(in oklab, var(--surface) 86%, transparent);
-  backdrop-filter: blur(14px) saturate(1.2);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  border: 1px solid color-mix(in oklab, var(--foreground) 9%, transparent);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 12px 30px -14px rgb(0 0 0 / 0.55);
+  background-color: var(--surface);
+  border: 1px solid color-mix(in oklab, var(--foreground) 9%, var(--surface));
+  box-shadow: 0 6px 16px -10px rgb(0 0 0 / 0.5);
 }
 @utility cr-well {
   background-color: var(--surface-secondary);
@@ -291,10 +290,9 @@
 .cr-public .maplibregl-ctrl-group {
   border-radius: 9999px;
   overflow: hidden;
-  background: color-mix(in oklab, var(--surface) 88%, transparent);
-  backdrop-filter: blur(12px);
-  border: 1px solid color-mix(in oklab, var(--foreground) 9%, transparent);
-  box-shadow: 0 10px 24px -12px rgb(0 0 0 / 0.6) !important;
+  background: var(--surface);
+  border: 1px solid color-mix(in oklab, var(--foreground) 9%, var(--surface));
+  box-shadow: 0 6px 16px -10px rgb(0 0 0 / 0.5) !important;
 }
 .cr-public .maplibregl-ctrl-group button + button {
   border-top-color: color-mix(in oklab, var(--foreground) 9%, transparent);
@@ -303,7 +301,7 @@
   filter: invert(1) brightness(1.4);
 }
 .cr-public .maplibregl-ctrl-attrib {
-  background: color-mix(in oklab, var(--surface) 75%, transparent);
+  background: var(--surface);
   color: var(--muted);
   border-radius: 9999px;
 }
@@ -316,7 +314,7 @@
 }
 .cr-public .maplibregl-ctrl-bottom-left,
 .cr-public .maplibregl-ctrl-bottom-right {
-  /* keep attribution above the bottom sheet of report cards */
+  /* keep attribution above the floating buttons */
   bottom: var(--cr-map-bottom, 0px);
 }
 .cr-public .cr-popup .maplibregl-popup-content {
@@ -358,10 +356,7 @@
 /* Glossy primary pill (reference "Start order" button). */
 @utility cr-gloss {
   background-image: linear-gradient(180deg, rgb(255 255 255 / 0.22), rgb(255 255 255 / 0) 60%);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.4),
-    inset 0 -1px 0 rgb(0 0 0 / 0.14),
-    0 10px 24px -12px rgb(var(--c-primary) / 0.95);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4), inset 0 -1px 0 rgb(0 0 0 / 0.14);
 }
 .cr-public .maplibregl-ctrl-top-right {
   top: 72px;
