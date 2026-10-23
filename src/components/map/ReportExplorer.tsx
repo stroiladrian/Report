@@ -15,8 +15,7 @@ import { EmptyState, ErrorState, LoadingState, Spinner } from "@/components/ui/S
 import { Pagination } from "@/components/ui/Pagination";
 import { ReportCard } from "@/components/reports/ReportCard";
 import { FilterPanel } from "./FilterPanel";
-import { MapView, type Bbox, type LngLat } from "./MapView";
-import { NearbyCard, distanceM } from "./NearbyCards";
+import { MapView, type Bbox } from "./MapView";
 import { branding } from "@config/branding";
 import { mapBus } from "@/lib/map-bus";
 import { useTheme } from "@/lib/theme/client";
@@ -24,9 +23,8 @@ import { useTheme } from "@/lib/theme/client";
 type Facets = { statuses: StatusGroupDTO[]; categories: CategoryFacet[] };
 
 /**
- * Home screen: full-screen map under a floating header, report cards along the bottom
- * (swipe ↔ map follows; tap a marker → its card), filters in a panel / bottom sheet,
- * optional list panel. Filter state lives in the URL.
+ * Home screen: full-screen map under a floating header (tap a marker → its report),
+ * filters in a panel / bottom sheet, optional list panel. Filter state lives in the URL.
  */
 export function ReportExplorer({ loggedIn }: { loggedIn: boolean }) {
   const { t, locale } = useI18n();
@@ -54,9 +52,6 @@ export function ReportExplorer({ loggedIn }: { loggedIn: boolean }) {
   const [mobileFilters, setMobileFilters] = useState(false);
   const [desktopFilters, setDesktopFilters] = useState(true);
   const theme = useTheme() ?? branding.publicTheme.defaultMode;
-  const [userPos, setUserPos] = useState<LngLat | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [focus, setFocus] = useState<{ id: string; n: number } | null>(null);
   const [inset, setInset] = useState(0);
   const [reload, setReload] = useState(0);
 
@@ -133,26 +128,9 @@ export function ReportExplorer({ loggedIn }: { loggedIn: boolean }) {
     [],
   );
 
-  // Cards: nearest reports to the visitor (or to the town centre until they share their location).
-  const anchor = userPos ?? branding.map.defaultLocation;
-  const cards = useMemo(() => {
-    const sorted = points
-      .map((r) => ({ r, d: distanceM(anchor, r) }))
-      .sort((a, b) => a.d - b.d)
-      .slice(0, 40);
-    if (selectedId && !sorted.some((x) => x.r.id === selectedId)) {
-      const r = points.find((p) => p.id === selectedId);
-      if (r) sorted.unshift({ r, d: distanceM(anchor, r) });
-    }
-    return sorted;
-  }, [points, anchor.lat, anchor.lng, selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const rail = useRef<HTMLDivElement>(null);
   const bottom = useRef<HTMLDivElement>(null);
-  const cardEls = useRef(new Map<string, HTMLElement>());
-  const programmatic = useRef(false);
 
-  // Bottom overlay height → camera padding + attribution offset.
+  // Bottom buttons height → keeps the map attribution above them.
   useEffect(() => {
     const el = bottom.current;
     if (!el) return;
@@ -161,41 +139,8 @@ export function ReportExplorer({ loggedIn }: { loggedIn: boolean }) {
     return () => ro.disconnect();
   }, [listOpen]);
 
-  const scrollToCard = (id: string) => {
-    const el = cardEls.current.get(id);
-    if (!el || !rail.current) return;
-    programmatic.current = true;
-    el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-    window.setTimeout(() => (programmatic.current = false), 700);
-  };
-
-  // Marker tap: first tap selects (and brings its card into view), a second tap opens it.
-  const onMarker = (r: MapReportDTO) => {
-    if (selectedId === r.id) return openReport(r.number);
-    setSelectedId(r.id);
-    requestAnimationFrame(() => scrollToCard(r.id));
-  };
-
-  // Swiping the cards: the card closest to the centre becomes the selection and the map follows.
-  const scrollTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const onRailScroll = () => {
-    clearTimeout(scrollTimer.current);
-    scrollTimer.current = setTimeout(() => {
-      const box = rail.current?.getBoundingClientRect();
-      if (!box || programmatic.current) return;
-      const mid = box.left + box.width / 2;
-      let best: { id: string; d: number } | null = null;
-      for (const [id, el] of cardEls.current) {
-        const b = el.getBoundingClientRect();
-        const d = Math.abs(b.left + b.width / 2 - mid);
-        if (!best || d < best.d) best = { id, d };
-      }
-      if (best && best.id !== selectedId) {
-        setSelectedId(best.id);
-        setFocus((f) => ({ id: best!.id, n: (f?.n ?? 0) + 1 }));
-      }
-    }, 140);
-  };
+  const onMarker = useCallback((r: MapReportDTO) => openReport(r.number), [openReport]);
+  const onBounds = useCallback((b: Bbox) => setBbox(b), []);
 
   const panel = (
     <FilterPanel filters={filters} statuses={facets.statuses} categories={facets.categories} onChange={update} loggedIn={loggedIn} />
@@ -208,17 +153,10 @@ export function ReportExplorer({ loggedIn }: { loggedIn: boolean }) {
           reports={points}
           heatmap={false}
           theme={theme}
-          selectedId={selectedId}
-          focus={focus}
           bottomInset={listOpen ? 0 : inset}
           onSelect={onMarker}
-          onOpen={(r) => openReport(r.number)}
-          onBoundsChange={(b) => setBbox(b)}
-          onUserLocation={(p) => {
-            setUserPos(p);
-            setSelectedId(null);
-            requestAnimationFrame(() => rail.current?.scrollTo({ left: 0, behavior: "smooth" }));
-          }}
+          onOpen={onMarker}
+          onBoundsChange={onBounds}
           className="absolute inset-0"
         />
 
@@ -264,7 +202,7 @@ export function ReportExplorer({ loggedIn }: { loggedIn: boolean }) {
           </div>
         )}
 
-        {/* Bottom: actions row + swipeable report cards */}
+        {/* Bottom: list + "Report an issue" */}
         {!listOpen && (
           <div ref={bottom} className="pointer-events-none absolute inset-x-0 bottom-0 z-10 pb-[max(env(safe-area-inset-bottom),12px)]">
             <div className="pointer-events-auto mx-auto flex max-w-[1400px] items-center justify-between gap-2 px-4 sm:px-6">
@@ -286,35 +224,6 @@ export function ReportExplorer({ loggedIn }: { loggedIn: boolean }) {
                 {t("header.reportIssue")}
               </Link>
             </div>
-            {cards.length > 0 && (
-              <div
-                ref={rail}
-                onScroll={onRailScroll}
-                role="list"
-                aria-label={userPos ? t("map.nearby") : t("map.nearbyCenter")}
-                className="cr-snap pointer-events-auto mt-1 flex gap-3 overflow-x-auto px-4 pb-1 sm:px-6 md:[mask-image:linear-gradient(90deg,transparent,#000_24px,#000_calc(100%-24px),transparent)]"
-              >
-                {cards.map(({ r, d }) => (
-                  <div role="listitem" key={r.id} className="flex">
-                    <NearbyCard
-                      ref={(el) => {
-                        if (el) cardEls.current.set(r.id, el);
-                        else cardEls.current.delete(r.id);
-                      }}
-                      report={r}
-                      distance={userPos ? d : null}
-                      selected={selectedId === r.id}
-                      onSelect={() => {
-                        setSelectedId(r.id);
-                        setFocus((f) => ({ id: r.id, n: (f?.n ?? 0) + 1 }));
-                      }}
-                      onOpen={() => openReport(r.number)}
-                    />
-                  </div>
-                ))}
-                <div aria-hidden="true" className="w-1 shrink-0" />
-              </div>
-            )}
           </div>
         )}
       </div>
