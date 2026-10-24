@@ -35,9 +35,6 @@ export type MapReportDTO = {
   color: string;
   statusLabel: string;
   category: string;
-  /** Top-level category slug (map icon). */
-  categoryKey: string;
-  address: string | null;
   createdAt: string;
   photos: string[]; // URLs to /api/files/:id
 };

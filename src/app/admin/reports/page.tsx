@@ -47,7 +47,7 @@ export default async function AdminReports({ searchParams }: { searchParams: Pro
         </a>
       </div>
 
-      <AutoSubmitForm action="/admin/reports" className="flex flex-wrap items-end gap-2 rounded-lg bg-white p-3 shadow-xs ring-1 ring-slate-200">
+      <AutoSubmitForm action="/admin/reports" className="flex flex-wrap items-end gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">
         <div className="min-w-56 flex-1">
           <label htmlFor="q" className="sr-only">
             {t("common.search")}
@@ -128,7 +128,7 @@ export default async function AdminReports({ searchParams }: { searchParams: Pro
       ) : (
         <>
           {/* Table (≥ md) */}
-          <div className="hidden overflow-x-auto rounded-lg bg-white shadow-xs ring-1 ring-slate-200 md:block">
+          <div className="hidden overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-slate-200 md:block">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
                 <tr>
@@ -160,7 +160,7 @@ export default async function AdminReports({ searchParams }: { searchParams: Pro
                     <td className="px-3 py-2.5">
                       <StatusBadge label={r.status.label} color={r.status.color} size="sm" />
                     </td>
-                    <td className="hidden max-w-48 px-3 py-2.5 text-slate-700 lg:table-cell">
+                    <td className="hidden max-w-[12rem] px-3 py-2.5 text-slate-700 lg:table-cell">
                       <span className="line-clamp-1">{r.department ?? "—"}</span>
                     </td>
                     <td className="px-3 py-2.5 text-slate-700">{r.assignee ?? <span className="text-slate-400">{t("admin.reports.unassigned")}</span>}</td>
@@ -178,7 +178,7 @@ export default async function AdminReports({ searchParams }: { searchParams: Pro
           <ul className="space-y-2 md:hidden">
             {data.items.map((r) => (
               <li key={r.id}>
-                <Link href={`/admin/reports/${r.number}`} className="block rounded-lg bg-white p-3 shadow-xs ring-1 ring-slate-200">
+                <Link href={`/admin/reports/${r.number}`} className="block rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-semibold text-primary">{r.number}</span>
                     <StatusBadge label={r.status.label} color={r.status.color} size="sm" />

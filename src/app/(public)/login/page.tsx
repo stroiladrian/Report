@@ -18,7 +18,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <AuthShell>
       <AuthCard title={t("auth.loginTitle")}>
-        {returnTo?.startsWith("/submit") && <p className="mb-4 rounded-sm bg-primary-light/60 px-3 py-2 text-sm text-primary-dark">{t("create.loginRequired")}</p>}
+        {returnTo?.startsWith("/submit") && <p className="mb-4 rounded bg-primary-light/60 px-3 py-2 text-sm text-primary-dark">{t("create.loginRequired")}</p>}
         <LoginForm returnTo={returnTo ?? null} google={googleEnabled()} initialError={initialError} />
       </AuthCard>
       <Faq />
@@ -30,7 +30,7 @@ async function Faq() {
   const { t, locale } = await getT();
   const items = dictionaries[locale].auth.faq;
   return (
-    <section className="rounded-lg bg-surface p-5 shadow-xs sm:p-6" aria-labelledby="faq-h">
+    <section className="rounded-lg bg-white p-5 shadow-sm sm:p-6" aria-labelledby="faq-h">
       <h2 id="faq-h" className="mb-3 flex items-center gap-2 text-xl font-bold">
         <Icon name="info" /> {t("auth.faqTitle")}
       </h2>

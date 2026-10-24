@@ -49,10 +49,6 @@ const en = {
     myReports: "My reports",
     notifications: "Notifications",
     reportIssue: "Report an issue",
-    theme: "Appearance",
-    themeDark: "Dark",
-    themeLight: "Light",
-    home: "Map",
   },
   footer: {
     contact: "Contact",
@@ -77,7 +73,6 @@ const en = {
     photo: "Photo {n}",
     noLocation: "Without location",
     reportsInView: "{count} reports",
-    searchFilters: "Search & filters",
   },
   filters: {
     title: "Filters",

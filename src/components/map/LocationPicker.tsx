@@ -1,6 +1,5 @@
 "use client";
 
-import { currentMapStyle } from "@/lib/theme/client";
 import type { Map as MlMap } from "maplibre-gl";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { branding } from "@config/branding";
@@ -94,7 +93,7 @@ export function LocationPicker({
       const start = valueRef.current ?? { lat: branding.map.defaultLocation.lat, lng: branding.map.defaultLocation.lng };
       map = new maplibregl.Map({
         container: container.current,
-        style: currentMapStyle(),
+        style: branding.map.styleUrl,
         center: [start.lng, start.lat],
         zoom: valueRef.current ? 17 : branding.map.defaultZoom + 1,
         minZoom: branding.map.minZoom,
@@ -213,13 +212,13 @@ export function LocationPicker({
               autoComplete="off"
             />
           </div>
-          <button type="button" onClick={locate} aria-label={t("create.location.useMyLocation")} title={t("create.location.useMyLocation")} className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-slate-300 bg-surface px-3 text-sm font-semibold hover:bg-slate-50">
+          <button type="button" onClick={locate} aria-label={t("create.location.useMyLocation")} title={t("create.location.useMyLocation")} className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold hover:bg-slate-50">
             {locating ? <Spinner size={16} /> : <Icon name="locate" size={18} />}
             <span className="hidden sm:inline">{t("create.location.useMyLocation")}</span>
           </button>
         </div>
         {results && (
-          <ul id={listId} role="listbox" className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-slate-300 bg-surface shadow-card">
+          <ul id={listId} role="listbox" className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-slate-300 bg-white shadow-card">
             {results.length === 0 ? (
               <li className="px-3 py-2 text-sm text-slate-500">{t("create.location.noResults")}</li>
             ) : (
@@ -248,7 +247,7 @@ export function LocationPicker({
         <div ref={container} className="h-full w-full" aria-label={t("create.location.hint")} role="application" />
         {/* Fixed centre pin */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full" aria-hidden="true">
-          <svg width="40" height="52" viewBox="0 0 40 52">
+          <svg width="40" height="52" viewBox="0 0 40 52" className="drop-shadow-md">
             <path d="M20 51S3 32.5 3 19a17 17 0 1 1 34 0c0 13.5-17 32-17 32z" fill={branding.colors.accent} stroke="#fff" strokeWidth="3" />
             <circle cx="20" cy="19" r="6.5" fill="#fff" />
           </svg>
@@ -256,7 +255,7 @@ export function LocationPicker({
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/30" aria-hidden="true" />
       </div>
 
-      <div className="rounded-lg bg-subtle p-3 text-sm" aria-live="polite">
+      <div className="rounded-lg bg-surface p-3 text-sm" aria-live="polite">
         <p className="font-semibold text-slate-700">{t("create.location.detected")}</p>
         <p className="flex items-center gap-2 text-slate-900">
           {geocoding && <Spinner size={14} />}

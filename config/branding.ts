@@ -61,50 +61,9 @@ export const branding = {
     surface: "#f1f5f9",
   },
 
-  /**
-   * Look of the PUBLIC site (map, report pages, account, login). The back-office keeps `colors` above.
-   * Dark is the default; visitors can switch to light from the menu (remembered in a cookie).
-   * Colours are hex; `primary` is used for buttons, links, focus rings and map highlights.
-   */
-  publicTheme: {
-    defaultMode: "dark" as "dark" | "light",
-    dark: {
-      primary: "#b9a3f5", // lavender
-      primaryDark: "#a38bef",
-      primaryLight: "#2e2842",
-      onPrimary: "#1b1430", // text on primary buttons
-      background: "#121215",
-      surface: "#1c1c20", // cards, panels
-      surfaceSecondary: "#26262b", // icon wells, inputs
-      surfaceTertiary: "#2f2f35",
-      foreground: "#f4f4f6",
-      muted: "#9d9da8",
-      border: "#2d2d33",
-    },
-    light: {
-      primary: "#7254de",
-      primaryDark: "#5e41c9",
-      primaryLight: "#ece7fd",
-      onPrimary: "#ffffff",
-      background: "#f3f3f6",
-      surface: "#ffffff",
-      surfaceSecondary: "#f1f1f4",
-      surfaceTertiary: "#e8e8ee",
-      foreground: "#18181c",
-      muted: "#6c6c77",
-      border: "#e3e3e9",
-    },
-    /** Map style per mode (any MapLibre style URL; OpenFreeMap is free, no key). Must share the host of map.styleUrl (CSP). */
-    mapStyle: {
-      dark: "https://tiles.openfreemap.org/styles/dark",
-      light: "https://tiles.openfreemap.org/styles/positron",
-    },
-  },
-
   /** CSS font-family stack. Optionally load a web font via `fontStylesheet`. */
   font: {
-    // Back-office font stack. The public site uses Inter (bundled with the app, see publicTheme).
-    family: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    family: '"Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     /** e.g. "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" – null keeps system fonts */
     fontStylesheet: null as string | null,
   },

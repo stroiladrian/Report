@@ -293,8 +293,8 @@ export async function mapReports(f: ReportFilters, actor: Actor | null, locale: 
       description: true,
       createdAt: true,
       status: true,
-      category: { select: { name: true, slug: true, parent: { select: { slug: true } } } },
-      location: { select: { lat: true, lng: true, street: true, streetNumber: true, formattedAddress: true } },
+      category: { select: { name: true } },
+      location: { select: { lat: true, lng: true } },
       attachments: {
         where: { isPublic: true, mimeType: { startsWith: "image/" } },
         select: { id: true },
@@ -315,8 +315,6 @@ export async function mapReports(f: ReportFilters, actor: Actor | null, locale: 
     color: r.status.color,
     statusLabel: tr(r.status.label, locale),
     category: tr(r.category.name, locale),
-    categoryKey: r.category.parent?.slug ?? r.category.slug,
-    address: r.location!.formattedAddress ?? ([r.location!.street, r.location!.streetNumber].filter(Boolean).join(" ") || null),
     createdAt: r.createdAt.toISOString(),
     photos: r.attachments.map((a) => fileUrl(a.id)),
   }));

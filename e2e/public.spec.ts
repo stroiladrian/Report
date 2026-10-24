@@ -8,7 +8,7 @@ test.describe("anonymous visitor", () => {
 
     // Filters live in a floating card on desktop, a bottom drawer on mobile
     const isMobile = (page.viewportSize()?.width ?? 1280) < 768;
-    if (isMobile) await page.getByRole("button", { name: /filtre/i }).click();
+    if (isMobile) await page.getByRole("button", { name: /Filtre/ }).click();
     const panel = isMobile ? page.getByRole("dialog") : page.locator("main");
     if (!isMobile) await panel.getByRole("button", { name: "Stare" }).first().click();
     const resolved = panel.getByRole("checkbox", { name: /Rezolvate/ }).first();

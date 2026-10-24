@@ -1,6 +1,5 @@
 "use client";
 
-import { currentMapStyle } from "@/lib/theme/client";
 import { useEffect, useRef } from "react";
 import { branding } from "@config/branding";
 
@@ -14,7 +13,7 @@ export function MiniMap({ lat, lng, color = branding.colors.primary, className, 
       if (cancelled || !ref.current) return;
       map = new maplibregl.Map({
         container: ref.current,
-        style: currentMapStyle(),
+        style: branding.map.styleUrl,
         center: [lng, lat],
         zoom: 16,
         interactive: true,

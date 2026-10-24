@@ -74,8 +74,6 @@ export function Modal({
       className={cn(
         "m-0 h-full max-h-none w-full max-w-none p-0 backdrop:animate-fade-in open:animate-pop-in",
         "sm:m-auto sm:h-auto sm:max-h-[calc(100vh-4rem)] sm:rounded-lg sm:shadow-2xl",
-        // public site: soft sheet with a hairline border
-        "[.cr-public_&]:bg-surface [.cr-public_&]:sm:rounded-[28px] [.cr-public_&]:sm:border [.cr-public_&]:sm:border-white/8",
         widths[size],
         className,
       )}
@@ -84,11 +82,11 @@ export function Modal({
       }}
     >
       {open && (
-        <div className="flex h-full max-h-[inherit] flex-col bg-surface">
+        <div className="flex h-full max-h-[inherit] flex-col bg-white">
           <header
             className={cn(
               "flex items-center justify-between gap-3 px-4 py-3.5 sm:px-6",
-              variant === "brand" ? "bg-primary text-on-primary [.cr-public_&]:border-b [.cr-public_&]:border-slate-200 [.cr-public_&]:bg-transparent [.cr-public_&]:text-foreground" : "border-b border-slate-200",
+              variant === "brand" ? "bg-primary text-white" : "border-b border-slate-200",
             )}
           >
             <h2 id="modal-title" className="text-xl font-bold">
@@ -99,7 +97,7 @@ export function Modal({
               onClick={onClose}
               className={cn(
                 "grid h-10 w-10 shrink-0 place-items-center rounded-full",
-                variant === "brand" ? "border-2 border-white/80 hover:bg-white/10 [.cr-public_&]:border [.cr-public_&]:border-slate-300 [.cr-public_&]:hover:bg-slate-100" : "hover:bg-slate-100",
+                variant === "brand" ? "border-2 border-white/80 hover:bg-white/10" : "hover:bg-slate-100",
               )}
               aria-label={closeLabel}
             >
@@ -180,18 +178,18 @@ export function Drawer({
   const pos = {
     left: "inset-y-0 left-0 w-[min(22rem,90vw)]",
     right: "inset-y-0 right-0 w-[min(24rem,92vw)] animate-slide-left",
-    bottom: "inset-x-0 bottom-0 max-h-[85dvh] rounded-t-2xl [.cr-public_&]:rounded-t-[28px] pb-[env(safe-area-inset-bottom)] animate-slide-up",
+    bottom: "inset-x-0 bottom-0 max-h-[85dvh] rounded-t-2xl pb-[env(safe-area-inset-bottom)] animate-slide-up",
   }[side];
   return (
-    <div className="fixed inset-0 z-70">
-      <div className="absolute inset-0 animate-fade-in bg-slate-900/55 [.cr-public_&]:bg-black/65" onClick={onClose} aria-hidden="true" />
+    <div className="fixed inset-0 z-[70]">
+      <div className="absolute inset-0 animate-fade-in bg-slate-900/55" onClick={onClose} aria-hidden="true" />
       <div
         ref={panel}
         role="dialog"
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className={cn("absolute flex flex-col bg-surface shadow-2xl outline-hidden", pos)}
+        className={cn("absolute flex flex-col bg-white shadow-2xl outline-none", pos)}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3">
           <h2 className="text-lg font-bold">{title}</h2>

@@ -25,7 +25,7 @@ export default async function MyReportsPage({ searchParams }: { searchParams: Pr
       aria-current={sp.status === key ? "page" : undefined}
       className={cn(
         "whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-semibold",
-        sp.status === key ? "border-primary bg-primary text-on-primary" : "border-slate-300 bg-surface text-slate-700 hover:border-slate-500",
+        sp.status === key ? "border-primary bg-primary text-white" : "border-slate-300 bg-white text-slate-700 hover:border-slate-500",
       )}
     >
       {label}
@@ -39,7 +39,7 @@ export default async function MyReportsPage({ searchParams }: { searchParams: Pr
           <ButtonLink href="/?mine=1" variant="outline" size="sm" icon="map">
             {t("map.viewMap")}
           </ButtonLink>
-          <ButtonLink href="/submit" size="sm" icon="plus" className="bg-cta border-cta hover:bg-cta-dark">
+          <ButtonLink href="/submit" size="sm" icon="plus" className="bg-accent border-accent hover:bg-accent-dark">
             {t("header.reportIssue")}
           </ButtonLink>
         </div>

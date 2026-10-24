@@ -54,7 +54,7 @@ export default async function AdminReportPage({ params }: { params: Promise<{ nu
             <span className="font-bold text-slate-900">{report.number}</span>
             <StatusBadge label={report.status.label} color={report.status.color} size="sm" />
             {!report.isPublic && (
-              <span className="inline-flex items-center gap-1 rounded-sm bg-slate-200 px-2 py-0.5 text-xs font-semibold">
+              <span className="inline-flex items-center gap-1 rounded bg-slate-200 px-2 py-0.5 text-xs font-semibold">
                 <Icon name="eyeOff" size={12} /> {t("admin.detail.internal")}
               </span>
             )}
@@ -72,11 +72,11 @@ export default async function AdminReportPage({ params }: { params: Promise<{ nu
 
       <div className="grid gap-4 xl:grid-cols-[1fr_22rem]">
         <div className="min-w-0 space-y-4">
-          <section className="rounded-lg bg-white p-4 shadow-xs ring-1 ring-slate-200">
+          <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
             <h2 className="mb-2 font-bold">{t("report.description")}</h2>
             <p className="whitespace-pre-wrap text-slate-800">{report.description}</p>
             {(report.redirectedTo || report.resolution) && (
-              <div className="mt-3 space-y-1 rounded-sm bg-slate-50 p-3 text-sm">
+              <div className="mt-3 space-y-1 rounded bg-slate-50 p-3 text-sm">
                 {report.redirectedTo && (
                   <p>
                     <b>{t("report.redirectedTo")}:</b> {report.redirectedTo}
@@ -92,7 +92,7 @@ export default async function AdminReportPage({ params }: { params: Promise<{ nu
           </section>
           <AttachmentsCard report={report} canUpload={can(user, PERMISSIONS.ATTACHMENT_UPLOAD_ADMIN)} />
           <ConversationCard report={report} canPublic={can(user, PERMISSIONS.REPORT_COMMENT_PUBLIC)} canInternal={can(user, PERMISSIONS.REPORT_COMMENT_INTERNAL)} />
-          <section className="rounded-lg bg-white p-4 shadow-xs ring-1 ring-slate-200">
+          <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
             <h2 className="mb-4 font-bold">{t("report.history")}</h2>
             <ReportTimeline history={report.history} locale={locale} showActor />
           </section>
@@ -101,7 +101,7 @@ export default async function AdminReportPage({ params }: { params: Promise<{ nu
         <div className="space-y-4">
           <WorkflowCard report={report} />
           <AssignmentCard report={report} departments={depts} />
-          <section className="rounded-lg bg-white p-4 shadow-xs ring-1 ring-slate-200">
+          <section className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
             <h2 className="mb-2 font-bold">{t("admin.detail.reporter")}</h2>
             {report.reporter ? (
               <dl className="space-y-1 text-sm">

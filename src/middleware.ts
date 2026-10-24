@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { PATH_HEADER } from "@/lib/theme/shared";
 
 /**
  * Edge middleware:
@@ -41,14 +40,9 @@ export function middleware(req: NextRequest) {
       return NextResponse.redirect(url);
     }
   }
-  if (pathname.startsWith("/api/")) return NextResponse.next();
-  // Pages: tell the root layout which path it renders (public site vs. back-office theme).
-  const headers = new Headers(req.headers);
-  headers.set(PATH_HEADER, pathname);
-  return NextResponse.next({ request: { headers } });
+  return NextResponse.next();
 }
 
 export const config = {
-  // API calls (CSRF) and all pages; static assets are skipped.
-  matcher: ["/api/:path*", "/((?!_next/|brand/|favicon|.*\\.(?:svg|png|jpg|jpeg|webp|ico|txt|xml)$).*)"],
+  matcher: ["/api/:path*", "/account/:path*", "/admin/:path*"],
 };

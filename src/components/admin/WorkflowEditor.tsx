@@ -47,8 +47,8 @@ export function TransitionMatrix({ statuses, transitions, canEdit }: { statuses:
     <div className="space-y-3">
       <p className="text-sm text-slate-600">{t("admin.workflow.help")}</p>
       <p className="flex flex-wrap gap-4 text-xs text-slate-600">
-        <span><span className="mr-1 inline-block h-4 w-4 rounded-sm bg-primary align-middle" /> ✓</span>
-        <span><span className="mr-1 inline-block h-4 w-4 rounded-sm bg-amber-500 align-middle" /> ✓ + {t("admin.workflow.requiresComment")}</span>
+        <span><span className="mr-1 inline-block h-4 w-4 rounded bg-primary align-middle" /> ✓</span>
+        <span><span className="mr-1 inline-block h-4 w-4 rounded bg-amber-500 align-middle" /> ✓ + {t("admin.workflow.requiresComment")}</span>
       </p>
       <div className="overflow-x-auto">
         <table className="border-collapse text-xs">

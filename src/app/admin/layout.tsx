@@ -2,7 +2,6 @@ import { requireStaffPage } from "@/lib/auth/guards";
 import { can } from "@/lib/rbac/policy";
 import { PERMISSIONS, type PermissionKey } from "@/lib/rbac/permissions";
 import { AdminShell, type AdminNavItem } from "@/components/admin/AdminShell";
-import { ThemeScope } from "@/components/layout/ThemeScope";
 
 export const metadata = { title: { default: "Back-office", template: "%s · Back-office" }, robots: { index: false } };
 
@@ -19,14 +18,11 @@ const NAV: (AdminNavItem & { perm: PermissionKey })[] = [
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await requireStaffPage("/admin");
   return (
-    <>
-    <ThemeScope area="admin" initial="light" />
     <AdminShell
       nav={NAV.filter((n) => can(user, n.perm)).map(({ perm: _p, ...n }) => n)}
       user={{ name: `${user.firstName} ${user.lastName}`, role: user.roleName }}
     >
       {children}
     </AdminShell>
-    </>
   );
 }

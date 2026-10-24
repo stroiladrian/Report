@@ -26,11 +26,11 @@ export function ReportDetailView({ report: r, t, locale, variant = "page" }: { r
           )}
           <h2 className={variant === "page" ? "text-2xl font-bold sm:text-3xl" : "text-xl font-bold"}>{r.title}</h2>
           {r.viewer.isOwner && (
-            <p className="mt-2 inline-flex items-center gap-1.5 rounded-sm bg-primary-light px-2 py-1 text-sm font-semibold text-primary-dark">
+            <p className="mt-2 inline-flex items-center gap-1.5 rounded bg-primary-light px-2 py-1 text-sm font-semibold text-primary-dark">
               <Icon name="user" size={16} /> {t("report.yourReport")}
             </p>
           )}
-          <p className="mt-4 whitespace-pre-wrap wrap-break-word text-slate-700">{r.description}</p>
+          <p className="mt-4 whitespace-pre-wrap break-words text-slate-700">{r.description}</p>
         </div>
 
         {images.length > 0 && (
@@ -86,7 +86,7 @@ export function ReportDetailView({ report: r, t, locale, variant = "page" }: { r
                   key={c.id}
                   className={
                     c.kind === "CITIZEN"
-                      ? "ml-6 rounded-lg border border-slate-200 bg-surface p-3"
+                      ? "ml-6 rounded-lg border border-slate-200 bg-white p-3"
                       : c.kind === "RESPONSE"
                         ? "rounded-lg border border-green-200 bg-green-50 p-3"
                         : "rounded-lg border border-slate-200 bg-slate-50 p-3"
@@ -154,7 +154,7 @@ export function ReportDetailView({ report: r, t, locale, variant = "page" }: { r
           </dl>
           {r.location && (
             <>
-              <MiniMap lat={r.location.lat} lng={r.location.lng} color={r.status.color} className="mt-4 h-44 w-full overflow-hidden rounded-sm" label={t("report.location")} />
+              <MiniMap lat={r.location.lat} lng={r.location.lng} color={r.status.color} className="mt-4 h-44 w-full overflow-hidden rounded" label={t("report.location")} />
               <Link href={`/?view=map`} className="sr-only">
                 {t("report.viewOnMap")}
               </Link>

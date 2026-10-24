@@ -51,10 +51,6 @@ const ro: Dictionary = {
     myReports: "Sesizările mele",
     notifications: "Notificări",
     reportIssue: "Adaugă sesizare",
-    theme: "Aspect",
-    themeDark: "Întunecat",
-    themeLight: "Luminos",
-    home: "Hartă",
   },
   footer: {
     contact: "Contact",
@@ -79,7 +75,6 @@ const ro: Dictionary = {
     photo: "Imagine {n}",
     noLocation: "Fără locație",
     reportsInView: "{count} sesizări",
-    searchFilters: "Căutare și filtre",
   },
   filters: {
     title: "Filtre",

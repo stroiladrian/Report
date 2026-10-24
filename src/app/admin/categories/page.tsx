@@ -30,7 +30,7 @@ export default async function CategoriesPage() {
         <span className="flex items-center gap-2">
           <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: c.color }} aria-hidden="true" />
           <span className={cn(!child && "font-semibold")}>{tr(c.name, locale)}</span>
-          {c.isSensitive && <span className="rounded-sm bg-slate-800 px-1.5 text-xs text-white">🔒</span>}
+          {c.isSensitive && <span className="rounded bg-slate-800 px-1.5 text-xs text-white">🔒</span>}
         </span>
         <span className="block pl-5 text-xs text-slate-500">{c.slug}</span>
       </td>
@@ -48,7 +48,7 @@ export default async function CategoriesPage() {
         <h1 className="text-2xl font-bold">{t("admin.categories.title")}</h1>
         <CategoryEditor initial={emptyCategory} parents={parentOpts} departments={deptOpts} mode="new" />
       </div>
-      <div className="overflow-x-auto rounded-lg bg-white shadow-xs ring-1 ring-slate-200">
+      <div className="overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
             <tr>

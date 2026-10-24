@@ -19,7 +19,7 @@ export default async function DepartmentsPage() {
       </div>
       <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {depts.map((d) => (
-          <li key={d.id} className={`rounded-lg bg-white p-4 shadow-xs ring-1 ring-slate-200 ${d.isActive ? "" : "opacity-60"}`}>
+          <li key={d.id} className={`rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200 ${d.isActive ? "" : "opacity-60"}`}>
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="text-xs font-bold tracking-wide text-slate-500">{d.code}</p>

@@ -20,7 +20,7 @@ type Dept = { id: string; name: string; employees: { id: string; name: string }[
 
 function Card({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <section className={cn("rounded-lg bg-white p-4 shadow-xs ring-1 ring-slate-200", className)}>
+    <section className={cn("rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200", className)}>
       <h2 className="mb-3 font-bold">{title}</h2>
       {children}
     </section>
@@ -86,7 +86,7 @@ export function WorkflowCard({ report }: { report: AdminReportDetailDTO }) {
     <Card title={t("admin.detail.workflow")}>
       <p className="mb-3 flex items-center gap-2 text-sm">
         {t("report.status")}:
-        <span className="rounded-sm px-2 py-0.5 font-bold text-white" style={{ backgroundColor: report.status.color }}>
+        <span className="rounded px-2 py-0.5 font-bold text-white" style={{ backgroundColor: report.status.color }}>
           {report.status.label}
         </span>
       </p>
@@ -369,7 +369,7 @@ export function ConversationCard({ report, canPublic, canInternal }: { report: A
             )}
           >
             <p className="mb-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
-              <span className="rounded-sm bg-white/70 px-1.5 py-0.5 font-bold uppercase tracking-wide">
+              <span className="rounded bg-white/70 px-1.5 py-0.5 font-bold uppercase tracking-wide">
                 {c.kind === "NOTE" ? t("admin.detail.internal") : c.kind === "CITIZEN" ? t("admin.detail.citizen") : c.kind === "RESPONSE" ? t("report.response") : t("admin.detail.public")}
               </span>
               <span className="font-semibold">{c.authorName}</span>
@@ -431,7 +431,7 @@ export function AttachmentsCard({ report, canUpload }: { report: AdminReportDeta
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {report.attachments.map((a) => (
             <li key={a.id} className="overflow-hidden rounded-md ring-1 ring-slate-200">
-              <a href={a.url} target="_blank" rel="noopener noreferrer" className="block aspect-4/3 bg-slate-100">
+              <a href={a.url} target="_blank" rel="noopener noreferrer" className="block aspect-[4/3] bg-slate-100">
                 {a.isImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={a.url} alt={a.name} className="h-full w-full object-cover" loading="lazy" />
@@ -445,7 +445,7 @@ export function AttachmentsCard({ report, canUpload }: { report: AdminReportDeta
                 <span className={cn("font-semibold", a.kind === "ADMIN" ? "text-primary" : "text-slate-600")}>{a.kind === "ADMIN" ? t("admin.detail.staff") : t("admin.detail.citizen")}</span>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 rounded-sm px-1.5 py-1 hover:bg-slate-100"
+                  className="inline-flex items-center gap-1 rounded px-1.5 py-1 hover:bg-slate-100"
                   onClick={() => run(`vis-${a.id}`, () => api(`/api/attachments/${a.id}`, { method: "PATCH", json: { isPublic: !a.isPublic } }))}
                   aria-label={a.isPublic ? t("admin.detail.hidePhoto") : t("admin.detail.showPhoto")}
                   title={a.isPublic ? t("admin.detail.hidePhoto") : t("admin.detail.showPhoto")}
@@ -490,7 +490,7 @@ export function AttachmentsCard({ report, canUpload }: { report: AdminReportDeta
 export function AuditCard({ report }: { report: AdminReportDetailDTO }) {
   const { t, locale } = useI18n();
   return (
-    <details className="rounded-lg bg-white p-4 shadow-xs ring-1 ring-slate-200">
+    <details className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
       <summary className="cursor-pointer font-bold">
         {t("admin.detail.audit")} <span className="font-normal text-slate-500">({report.audit.length})</span>
       </summary>
@@ -498,10 +498,10 @@ export function AuditCard({ report }: { report: AdminReportDetailDTO }) {
         {report.audit.map((a) => (
           <li key={a.id} className="border-l-2 border-slate-200 pl-3">
             <p>
-              <code className="rounded-sm bg-slate-100 px-1 text-xs">{a.action}</code> · <span className="font-semibold">{a.actorName ?? t("admin.audit.system")}</span>
+              <code className="rounded bg-slate-100 px-1 text-xs">{a.action}</code> · <span className="font-semibold">{a.actorName ?? t("admin.audit.system")}</span>
             </p>
             <p className="text-xs text-slate-500">{formatDateTime(a.at, locale)}</p>
-            {a.data != null && <pre className="mt-1 max-h-32 overflow-auto rounded-sm bg-slate-50 p-2 text-xs">{JSON.stringify(a.data, null, 1)}</pre>}
+            {a.data != null && <pre className="mt-1 max-h-32 overflow-auto rounded bg-slate-50 p-2 text-xs">{JSON.stringify(a.data, null, 1)}</pre>}
           </li>
         ))}
       </ol>

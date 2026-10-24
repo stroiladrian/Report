@@ -51,7 +51,7 @@ export function DailyBars({ data, locale, label }: { data: { day: string; count:
       </svg>
       {hover !== null && (
         <div
-          className="pointer-events-none absolute -translate-x-1/2 rounded-sm bg-slate-900 px-2 py-1 text-xs text-white shadow-sm"
+          className="pointer-events-none absolute -translate-x-1/2 rounded bg-slate-900 px-2 py-1 text-xs text-white shadow"
           style={{ left: `${((PAD + (hover + 0.5) * (bw + gap)) / W) * 100}%`, top: 0 }}
         >
           {formatDate(data[hover]!.day, locale)}: <b>{data[hover]!.count}</b>

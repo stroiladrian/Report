@@ -148,7 +148,7 @@ export function ReportWizard({ categories }: { categories: CategoryDTO[] }) {
         <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-green-100 text-green-700">
           <Icon name="check" size={36} strokeWidth={3} />
         </div>
-        <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-bold outline-hidden">
+        <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-bold outline-none">
           {t("create.success.title")}
         </h1>
         <p className="mt-4 text-sm font-semibold uppercase tracking-wide text-slate-500">{t("create.success.number")}</p>
@@ -183,8 +183,8 @@ export function ReportWizard({ categories }: { categories: CategoryDTO[] }) {
         stepOf={t("create.stepOf", { step: step + 1, total: steps.length })}
       />
 
-      <section ref={sectionRef} aria-labelledby="step-h" className="rounded-lg bg-surface">
-        <h2 id="step-h" ref={headingRef} tabIndex={-1} className="mb-1 text-xl font-bold outline-hidden sm:text-2xl">
+      <section ref={sectionRef} aria-labelledby="step-h" className="rounded-lg bg-white">
+        <h2 id="step-h" ref={headingRef} tabIndex={-1} className="mb-1 text-xl font-bold outline-none sm:text-2xl">
           {step === 0 && t("create.location.heading")}
           {step === 1 && t("create.category.heading")}
           {step === 2 && t("create.description.heading")}
@@ -305,9 +305,9 @@ export function ReportWizard({ categories }: { categories: CategoryDTO[] }) {
                       {files.map((f) =>
                         f.preview ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img key={f.id} src={f.preview} alt={f.file.name} className="h-14 w-14 rounded-sm object-cover" />
+                          <img key={f.id} src={f.preview} alt={f.file.name} className="h-14 w-14 rounded object-cover" />
                         ) : (
-                          <span key={f.id} className="rounded-sm bg-slate-100 px-2 py-1 text-xs">{f.file.name}</span>
+                          <span key={f.id} className="rounded bg-slate-100 px-2 py-1 text-xs">{f.file.name}</span>
                         ),
                       )}
                     </span>
@@ -319,7 +319,7 @@ export function ReportWizard({ categories }: { categories: CategoryDTO[] }) {
               ].map((row, i) => (
                 <div key={i} className="grid gap-1 p-3 sm:grid-cols-[10rem_1fr_auto] sm:gap-3">
                   <dt className="font-semibold text-slate-700">{row.k}</dt>
-                  <dd className="min-w-0 wrap-break-word text-slate-900">{row.v}</dd>
+                  <dd className="min-w-0 break-words text-slate-900">{row.v}</dd>
                   <dd>
                     <button type="button" className="link text-sm" onClick={() => setStep(row.s as Step)}>
                       {t("create.review.edit")}
@@ -347,7 +347,7 @@ export function ReportWizard({ categories }: { categories: CategoryDTO[] }) {
               <div aria-live="polite">
                 <p className="mb-1 text-sm font-medium">{t("create.submitting")}</p>
                 <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-                  <div className="h-full bg-cta transition-all" style={{ width: `${progress}%` }} />
+                  <div className="h-full bg-accent transition-all" style={{ width: `${progress}%` }} />
                 </div>
               </div>
             )}
@@ -355,7 +355,7 @@ export function ReportWizard({ categories }: { categories: CategoryDTO[] }) {
         )}
       </section>
 
-      <div className="sticky bottom-0 z-20 -mx-4 flex gap-2 border-t border-slate-200 bg-surface/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0">
+      <div className="sticky bottom-0 z-20 -mx-4 flex gap-2 border-t border-slate-200 bg-white/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0">
         {step > 0 ? (
           <Button variant="outline" onClick={back} icon="arrowLeft" disabled={submitting}>
             {t("common.back")}

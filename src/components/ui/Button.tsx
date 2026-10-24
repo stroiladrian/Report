@@ -7,17 +7,15 @@ import { Spinner } from "./States";
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "cta" | "outline";
 type Size = "sm" | "md" | "lg";
 
-// `cr-btn` / `cr-btn--<variant>` are hooks for the public-site theme (see globals.css → .cr-public);
-// the back-office keeps the plain utility look.
 const base =
-  "cr-btn inline-flex items-center justify-center gap-2 font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 select-none whitespace-nowrap";
+  "inline-flex items-center justify-center gap-2 font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 select-none whitespace-nowrap";
 const variants: Record<Variant, string> = {
-  primary: "cr-btn--primary bg-primary text-on-primary hover:bg-primary-dark border border-primary",
-  secondary: "cr-btn--secondary bg-surface text-primary border border-primary hover:bg-primary-light/60",
-  outline: "cr-btn--outline bg-surface text-slate-800 border border-slate-300 hover:bg-slate-50",
-  ghost: "cr-btn--ghost bg-transparent text-slate-700 hover:bg-slate-100 border border-transparent",
+  primary: "bg-primary text-white hover:bg-primary-dark border border-primary",
+  secondary: "bg-white text-primary border border-primary hover:bg-primary-light/60",
+  outline: "bg-white text-slate-800 border border-slate-300 hover:bg-slate-50",
+  ghost: "bg-transparent text-slate-700 hover:bg-slate-100 border border-transparent",
   danger: "bg-red-600 text-white hover:bg-red-700 border border-red-600",
-  cta: "cr-btn--primary cr-btn--cta bg-cta text-on-cta hover:bg-cta-dark border-2 border-white shadow-lg rounded-full",
+  cta: "bg-accent text-white hover:bg-accent-dark border-2 border-white shadow-lg rounded-full",
 };
 const sizes: Record<Size, string> = {
   sm: "min-h-9 px-3 text-sm rounded-md",
